@@ -8,3 +8,4 @@
 - Add document bounds detection and normalized image output.
 - Add lifecycle-safe document-capture state management.
 - Add a customizable document framing overlay.
+- Add customer-configurable copy and visual tokens.
