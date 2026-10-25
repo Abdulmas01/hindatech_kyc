@@ -5,3 +5,4 @@
 - Add forward-compatible capture-manifest parsing.
 - Add the document-capture configuration, result, and runtime foundation.
 - Add camera permission, device selection, initialization, and lifecycle support.
+- Add document bounds detection and normalized image output.
