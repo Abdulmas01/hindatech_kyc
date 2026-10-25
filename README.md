@@ -31,6 +31,7 @@ iOS applications must provide `NSCameraUsageDescription` in `Info.plist`.
 - Camera permission, selection, initialization, and lifecycle handling
 - Document bounds detection, cropping, orientation correction, and resizing
 - Lifecycle-safe document-capture state
+- Customizable document framing overlay
 
 Capture UI, live quality guidance, upload orchestration, and polling will be
 added incrementally.
