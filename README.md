@@ -33,6 +33,7 @@ iOS applications must provide `NSCameraUsageDescription` in `Info.plist`.
 - Lifecycle-safe document-capture state
 - Customizable document framing overlay
 - Customer-configurable copy and visual tokens
+- Guided document capture view with capture, retake, and lifecycle handling
 
-Capture UI, live quality guidance, upload orchestration, and polling will be
-added incrementally.
+Live quality guidance, upload orchestration, and polling will be added
+incrementally.

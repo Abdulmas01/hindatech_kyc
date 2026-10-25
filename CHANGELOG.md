@@ -9,3 +9,4 @@
 - Add lifecycle-safe document-capture state management.
 - Add a customizable document framing overlay.
 - Add customer-configurable copy and visual tokens.
+- Add the guided document capture view.
