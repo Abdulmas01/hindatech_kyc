@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../capture/document/document_capture_overlay.dart';
+import '../features/document_capture/presentation/widgets/document_capture_overlay.dart';
 
 class HindatechKycTheme {
   const HindatechKycTheme({

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hindatech_kyc/src/capture/document/document_capture_notifier.dart';
-import 'package:hindatech_kyc/src/capture/document/document_capture_state.dart';
+import 'package:hindatech_kyc/src/features/document_capture/presentation/controllers/document_capture_notifier.dart';
+import 'package:hindatech_kyc/src/features/document_capture/presentation/models/document_capture_state.dart';
 
 void main() {
   late ProviderContainer container;

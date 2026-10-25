@@ -1,10 +1,10 @@
 import 'package:camera/camera.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hindatech_kyc/hindatech_kyc.dart';
-import 'package:hindatech_kyc/src/capture/camera/camera_device_selector.dart';
-import 'package:hindatech_kyc/src/capture/camera/camera_lifecycle_coordinator.dart';
-import 'package:hindatech_kyc/src/capture/camera/camera_permission_service.dart';
-import 'package:hindatech_kyc/src/capture/document/document_camera_controller_factory.dart';
+import 'package:hindatech_kyc/src/core/camera/camera_device_selector.dart';
+import 'package:hindatech_kyc/src/core/camera/camera_lifecycle_coordinator.dart';
+import 'package:hindatech_kyc/src/core/camera/camera_permission_service.dart';
+import 'package:hindatech_kyc/src/features/document_capture/data/services/document_camera_controller_factory.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 void main() {

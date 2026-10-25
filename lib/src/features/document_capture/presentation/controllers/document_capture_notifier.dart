@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'document_capture_state.dart';
+import '../models/document_capture_state.dart';
 
 class DocumentCaptureNotifier
     extends AutoDisposeNotifier<DocumentCaptureState> {

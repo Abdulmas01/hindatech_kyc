@@ -1,9 +1,9 @@
 import 'package:camera/camera.dart';
 
 import 'document_bounds_detector.dart';
-import 'document_capture_config.dart';
-import 'document_capture_result.dart';
 import 'document_image_normalizer.dart';
+import '../../domain/models/document_capture_config.dart';
+import '../../domain/models/document_capture_result.dart';
 
 class DocumentCaptureService {
   const DocumentCaptureService({

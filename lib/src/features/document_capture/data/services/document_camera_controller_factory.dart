@@ -1,7 +1,7 @@
 import 'package:camera/camera.dart';
 
-import '../camera/camera_device_selector.dart';
-import 'document_capture_config.dart';
+import '../../../../core/camera/camera_device_selector.dart';
+import '../../domain/models/document_capture_config.dart';
 
 typedef AvailableCamerasLoader = Future<List<CameraDescription>> Function();
 

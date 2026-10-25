@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'document_capture_config.dart';
+import '../../domain/models/document_capture_config.dart';
 
 class DocumentCaptureOverlayStyle {
   const DocumentCaptureOverlayStyle({

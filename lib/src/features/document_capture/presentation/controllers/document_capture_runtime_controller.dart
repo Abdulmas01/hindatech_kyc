@@ -1,4 +1,4 @@
-import 'document_capture_config.dart';
+import '../../domain/models/document_capture_config.dart';
 
 class DocumentCaptureRuntimeController {
   DocumentCaptureRuntimeController({required int initialFrameStride})

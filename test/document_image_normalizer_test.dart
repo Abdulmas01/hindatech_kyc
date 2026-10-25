@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hindatech_kyc/src/capture/document/document_image_normalizer.dart';
+import 'package:hindatech_kyc/src/features/document_capture/data/services/document_image_normalizer.dart';
 
 void main() {
   group('DocumentImageNormalizer.calculateOutputSize', () {

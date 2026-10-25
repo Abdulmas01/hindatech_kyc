@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hindatech_kyc/hindatech_kyc.dart';
-import 'package:hindatech_kyc/src/capture/document/document_capture_runtime_controller.dart';
+import 'package:hindatech_kyc/src/features/document_capture/presentation/controllers/document_capture_runtime_controller.dart';
 
 void main() {
   test('balanced document capture configuration is stable', () {
