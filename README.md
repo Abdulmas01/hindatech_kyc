@@ -11,6 +11,16 @@ customer application.
 The host application obtains a short-lived SDK token from its backend.
 Long-lived API credentials must never be embedded in a Flutter application.
 
+## Platform setup
+
+Android applications must declare camera access in `AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.CAMERA" />
+```
+
+iOS applications must provide `NSCameraUsageDescription` in `Info.plist`.
+
 ## Current foundation
 
 - SDK configuration
@@ -18,5 +28,7 @@ Long-lived API credentials must never be embedded in a Flutter application.
 - Server-provided capture manifest
 - Document-capture configuration and result models
 - Adaptive document-frame processing
+- Camera permission, selection, initialization, and lifecycle handling
 
-Capture UI, upload orchestration, and polling will be added incrementally.
+Capture UI, document detection, upload orchestration, and polling will be added
+incrementally.
