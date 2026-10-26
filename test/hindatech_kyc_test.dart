@@ -2,9 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hindatech_kyc/hindatech_kyc.dart';
 
 void main() {
-  group('HindatechSdkSession', () {
+  group('VerificationSession', () {
     test('parses a server-defined document workflow', () {
-      final session = HindatechSdkSession.fromJson({
+      final session = VerificationSession.fromJson({
         'id': 'verification-id',
         'sdk_token': 'short-lived-token',
         'workflow_key': 'document_extract',
@@ -26,16 +26,16 @@ void main() {
       expect(session.captureManifest.requiredAssets, hasLength(1));
       expect(
         session.captureManifest.requiredAssets.single.assetType,
-        HindatechAssetType.documentFront,
+        CaptureAssetType.documentFront,
       );
       expect(
         session.captureManifest.requiredAssets.single.captureMethod,
-        HindatechCaptureMethod.document,
+        CaptureMethod.document,
       );
     });
 
     test('preserves unknown asset values for forward compatibility', () {
-      final manifest = HindatechCaptureManifest.fromJson({
+      final manifest = CaptureManifest.fromJson({
         'required_assets': [
           {
             'type': 'future_identity_signal',
@@ -45,15 +45,15 @@ void main() {
       });
 
       final requirement = manifest.requiredAssets.single;
-      expect(requirement.assetType, HindatechAssetType.unknown);
-      expect(requirement.captureMethod, HindatechCaptureMethod.unknown);
+      expect(requirement.assetType, CaptureAssetType.unknown);
+      expect(requirement.captureMethod, CaptureMethod.unknown);
       expect(requirement.assetTypeValue, 'future_identity_signal');
       expect(requirement.captureMethodValue, 'future_capture_method');
     });
 
     test('rejects a bootstrap response without a scoped SDK token', () {
       expect(
-        () => HindatechSdkSession.fromJson({
+        () => VerificationSession.fromJson({
           'id': 'verification-id',
           'capture_manifest': {'required_assets': <Object?>[]},
         }),
@@ -62,8 +62,8 @@ void main() {
     });
   });
 
-  test('HindatechKycConfig provides conservative defaults', () {
-    final config = HindatechKycConfig(
+  test('KycConfig provides conservative defaults', () {
+    final config = KycConfig(
       apiBaseUri: Uri.parse('https://api.hindatech.com'),
     );
 

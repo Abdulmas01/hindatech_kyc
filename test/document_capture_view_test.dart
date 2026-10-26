@@ -9,7 +9,7 @@ void main() {
       MaterialApp(
         home: DocumentCaptureView(
           autoInitialize: false,
-          strings: const HindatechKycStrings(
+          strings: const DocumentCaptureStrings(
             documentTitle: 'Scan identity card',
             documentInstruction: 'Place the card in the guide.',
           ),

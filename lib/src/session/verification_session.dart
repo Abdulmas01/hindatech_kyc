@@ -1,8 +1,12 @@
-import 'hindatech_capture_manifest.dart';
+import 'capture_manifest.dart';
 
-/// A short-lived, session-scoped SDK authorization returned by Hindatech.
-class HindatechSdkSession {
-  const HindatechSdkSession({
+/// A short-lived authorization and capture plan for one verification.
+///
+/// Applications obtain this payload from their backend. The contained token
+/// must be scoped to this verification and must not be replaced with a
+/// long-lived customer API credential.
+class VerificationSession {
+  const VerificationSession({
     required this.verificationId,
     required this.sdkToken,
     required this.captureManifest,
@@ -14,12 +18,12 @@ class HindatechSdkSession {
   final String sdkToken;
   final String? workflowKey;
   final DateTime? expiresAt;
-  final HindatechCaptureManifest captureManifest;
+  final CaptureManifest captureManifest;
 
   bool get isExpired =>
       expiresAt != null && !expiresAt!.isAfter(DateTime.now().toUtc());
 
-  factory HindatechSdkSession.fromJson(Map<String, Object?> json) {
+  factory VerificationSession.fromJson(Map<String, Object?> json) {
     final verificationId = json['id']?.toString().trim() ?? '';
     final sdkToken = json['sdk_token']?.toString().trim() ?? '';
     final rawManifest = json['capture_manifest'];
@@ -40,13 +44,13 @@ class HindatechSdkSession {
       manifestJson['workflow_key'] = workflowKey;
     }
 
-    return HindatechSdkSession(
+    return VerificationSession(
       verificationId: verificationId,
       sdkToken: sdkToken,
       workflowKey: workflowKey,
       expiresAt:
           DateTime.tryParse(json['expires_at']?.toString() ?? '')?.toUtc(),
-      captureManifest: HindatechCaptureManifest.fromJson(manifestJson),
+      captureManifest: CaptureManifest.fromJson(manifestJson),
     );
   }
 

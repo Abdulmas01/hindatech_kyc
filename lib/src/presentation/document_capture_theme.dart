@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../features/document_capture/presentation/widgets/document_capture_overlay.dart';
 
-class HindatechKycTheme {
-  const HindatechKycTheme({
+/// Visual customization for the document capture experience.
+class DocumentCaptureTheme {
+  const DocumentCaptureTheme({
     this.primaryColor = const Color(0xFF176B3A),
     this.onPrimaryColor = Colors.white,
     this.surfaceColor = Colors.white,

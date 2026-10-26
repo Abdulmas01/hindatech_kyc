@@ -1,5 +1,6 @@
-class HindatechKycStrings {
-  const HindatechKycStrings({
+/// Customer-facing text used by the document capture experience.
+class DocumentCaptureStrings {
+  const DocumentCaptureStrings({
     this.documentTitle = 'Capture your document',
     this.documentInstruction = 'Position your document inside the frame.',
     this.cameraPermissionTitle = 'Camera permission needed',

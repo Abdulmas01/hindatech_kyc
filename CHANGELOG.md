@@ -11,3 +11,4 @@
 - Add customer-configurable copy and visual tokens.
 - Add the guided document capture view.
 - Add a runnable customer integration example for Android and iOS.
+- Use domain-based names for public configuration, capture, and session APIs.

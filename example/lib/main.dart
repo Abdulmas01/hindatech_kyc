@@ -93,7 +93,7 @@ class DocumentCapturePage extends StatelessWidget {
     return Scaffold(
       body: DocumentCaptureView(
         config: const DocumentCaptureConfig.highQuality(),
-        strings: const HindatechKycStrings(
+        strings: const DocumentCaptureStrings(
           documentInstruction:
               'Keep the document flat and place all four corners inside the frame.',
         ),

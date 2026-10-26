@@ -1,5 +1,5 @@
-/// A known asset that a Hindatech workflow can ask the SDK to collect.
-enum HindatechAssetType {
+/// A known asset that a verification workflow can ask the SDK to collect.
+enum CaptureAssetType {
   documentFront('document_front'),
   documentBack('document_back'),
   selfie('selfie'),
@@ -7,11 +7,11 @@ enum HindatechAssetType {
   referenceFace('reference_face'),
   unknown('unknown');
 
-  const HindatechAssetType(this.wireValue);
+  const CaptureAssetType(this.wireValue);
 
   final String wireValue;
 
-  static HindatechAssetType fromWireValue(String value) {
+  static CaptureAssetType fromWireValue(String value) {
     for (final type in values) {
       if (type != unknown && type.wireValue == value) {
         return type;
@@ -22,18 +22,18 @@ enum HindatechAssetType {
 }
 
 /// A known capture experience that can collect an asset.
-enum HindatechCaptureMethod {
+enum CaptureMethod {
   document('document'),
   selfie('selfie'),
   liveness('liveness'),
   fileUpload('file_upload'),
   unknown('unknown');
 
-  const HindatechCaptureMethod(this.wireValue);
+  const CaptureMethod(this.wireValue);
 
   final String wireValue;
 
-  static HindatechCaptureMethod fromWireValue(String? value) {
+  static CaptureMethod fromWireValue(String? value) {
     for (final method in values) {
       if (method != unknown && method.wireValue == value) {
         return method;
@@ -44,8 +44,8 @@ enum HindatechCaptureMethod {
 }
 
 /// One asset requested by a server-defined verification workflow.
-class HindatechCaptureRequirement {
-  HindatechCaptureRequirement({
+class CaptureRequirement {
+  CaptureRequirement({
     required this.assetTypeValue,
     this.captureMethodValue,
     this.isRequired = true,
@@ -57,13 +57,13 @@ class HindatechCaptureRequirement {
   final bool isRequired;
   final Map<String, Object?> options;
 
-  HindatechAssetType get assetType =>
-      HindatechAssetType.fromWireValue(assetTypeValue);
+  CaptureAssetType get assetType =>
+      CaptureAssetType.fromWireValue(assetTypeValue);
 
-  HindatechCaptureMethod get captureMethod =>
-      HindatechCaptureMethod.fromWireValue(captureMethodValue);
+  CaptureMethod get captureMethod =>
+      CaptureMethod.fromWireValue(captureMethodValue);
 
-  factory HindatechCaptureRequirement.fromJson(Map<String, Object?> json) {
+  factory CaptureRequirement.fromJson(Map<String, Object?> json) {
     final assetType = json['type']?.toString().trim() ?? '';
     if (assetType.isEmpty) {
       throw const FormatException('Capture requirement type is missing.');
@@ -72,7 +72,7 @@ class HindatechCaptureRequirement {
     final captureMethod = json['capture']?.toString().trim();
     final rawOptions = json['options'];
 
-    return HindatechCaptureRequirement(
+    return CaptureRequirement(
       assetTypeValue: assetType,
       captureMethodValue:
           captureMethod == null || captureMethod.isEmpty ? null : captureMethod,
@@ -91,20 +91,20 @@ class HindatechCaptureRequirement {
 }
 
 /// Server-provided instructions describing what the SDK must collect.
-class HindatechCaptureManifest {
-  HindatechCaptureManifest({
-    required List<HindatechCaptureRequirement> requiredAssets,
+class CaptureManifest {
+  CaptureManifest({
+    required List<CaptureRequirement> requiredAssets,
     this.workflowKey,
     this.version,
   }) : requiredAssets = List.unmodifiable(requiredAssets);
 
   final String? workflowKey;
   final int? version;
-  final List<HindatechCaptureRequirement> requiredAssets;
+  final List<CaptureRequirement> requiredAssets;
 
   bool get isEmpty => requiredAssets.isEmpty;
 
-  factory HindatechCaptureManifest.fromJson(Map<String, Object?> json) {
+  factory CaptureManifest.fromJson(Map<String, Object?> json) {
     final rawAssets = json['required_assets'];
     if (rawAssets is! List) {
       throw const FormatException(
@@ -112,7 +112,7 @@ class HindatechCaptureManifest {
       );
     }
 
-    return HindatechCaptureManifest(
+    return CaptureManifest(
       workflowKey: _optionalString(json['workflow_key']),
       version: _optionalInt(json['version']),
       requiredAssets: rawAssets.map((asset) {
@@ -121,7 +121,7 @@ class HindatechCaptureManifest {
             'Each capture requirement must be an object.',
           );
         }
-        return HindatechCaptureRequirement.fromJson(
+        return CaptureRequirement.fromJson(
           Map<String, Object?>.from(asset),
         );
       }).toList(growable: false),

@@ -7,8 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/camera/camera_lifecycle_coordinator.dart';
 import '../../../../core/camera/camera_permission_service.dart';
-import '../../../../presentation/hindatech_kyc_strings.dart';
-import '../../../../presentation/hindatech_kyc_theme.dart';
+import '../../../../presentation/document_capture_strings.dart';
+import '../../../../presentation/document_capture_theme.dart';
 import '../../data/services/document_bounds_detector.dart';
 import '../../data/services/document_camera_controller_factory.dart';
 import '../../data/services/document_capture_service.dart';
@@ -25,8 +25,8 @@ class DocumentCaptureView extends StatelessWidget {
     this.onCancel,
     this.onError,
     this.config = const DocumentCaptureConfig.balanced(),
-    this.strings = const HindatechKycStrings(),
-    this.sdkTheme = const HindatechKycTheme(),
+    this.strings = const DocumentCaptureStrings(),
+    this.theme = const DocumentCaptureTheme(),
     @visibleForTesting this.autoInitialize = true,
   });
 
@@ -34,8 +34,8 @@ class DocumentCaptureView extends StatelessWidget {
   final VoidCallback? onCancel;
   final ValueChanged<Object>? onError;
   final DocumentCaptureConfig config;
-  final HindatechKycStrings strings;
-  final HindatechKycTheme sdkTheme;
+  final DocumentCaptureStrings strings;
+  final DocumentCaptureTheme theme;
   final bool autoInitialize;
 
   @override
@@ -47,7 +47,7 @@ class DocumentCaptureView extends StatelessWidget {
         onError: onError,
         config: config,
         strings: strings,
-        sdkTheme: sdkTheme,
+        captureTheme: theme,
         autoInitialize: autoInitialize,
       ),
     );
@@ -59,7 +59,7 @@ class _DocumentCaptureBody extends ConsumerStatefulWidget {
     required this.onCompleted,
     required this.config,
     required this.strings,
-    required this.sdkTheme,
+    required this.captureTheme,
     required this.autoInitialize,
     this.onCancel,
     this.onError,
@@ -69,8 +69,8 @@ class _DocumentCaptureBody extends ConsumerStatefulWidget {
   final VoidCallback? onCancel;
   final ValueChanged<Object>? onError;
   final DocumentCaptureConfig config;
-  final HindatechKycStrings strings;
-  final HindatechKycTheme sdkTheme;
+  final DocumentCaptureStrings strings;
+  final DocumentCaptureTheme captureTheme;
   final bool autoInitialize;
 
   @override
@@ -199,24 +199,24 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(documentCaptureProvider);
-    final theme = widget.sdkTheme.applyTo(Theme.of(context));
+    final theme = widget.captureTheme.applyTo(Theme.of(context));
     return Theme(
       data: theme,
       child: ColoredBox(
         color: theme.colorScheme.surface,
         child: SafeArea(
           child: Padding(
-            padding: EdgeInsets.all(widget.sdkTheme.spacing),
+            padding: EdgeInsets.all(widget.captureTheme.spacing),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(widget.strings.documentTitle,
                     style: theme.textTheme.headlineSmall),
-                SizedBox(height: widget.sdkTheme.spacing / 2),
+                SizedBox(height: widget.captureTheme.spacing / 2),
                 Text(widget.strings.documentInstruction),
-                SizedBox(height: widget.sdkTheme.spacing),
+                SizedBox(height: widget.captureTheme.spacing),
                 Expanded(child: _buildContent(state)),
-                SizedBox(height: widget.sdkTheme.spacing),
+                SizedBox(height: widget.captureTheme.spacing),
                 _buildActions(state),
               ],
             ),
@@ -236,23 +236,24 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
               state.phase == DocumentCapturePhase.permissionPermanentlyDenied
                   ? widget.strings.cameraPermissionSettingsMessage
                   : widget.strings.cameraPermissionMessage,
-          spacing: widget.sdkTheme.spacing / 2,
+          spacing: widget.captureTheme.spacing / 2,
         );
       case DocumentCapturePhase.cameraUnavailable:
         return _MessagePanel(
           title: widget.strings.cameraUnavailableTitle,
           message: widget.strings.cameraUnavailableMessage,
-          spacing: widget.sdkTheme.spacing / 2,
+          spacing: widget.captureTheme.spacing / 2,
         );
       case DocumentCapturePhase.failed:
         return _MessagePanel(
           title: widget.strings.documentCaptureFailedTitle,
           message: widget.strings.documentCaptureFailedMessage,
-          spacing: widget.sdkTheme.spacing / 2,
+          spacing: widget.captureTheme.spacing / 2,
         );
       case DocumentCapturePhase.captured:
         return ClipRRect(
-          borderRadius: BorderRadius.circular(widget.sdkTheme.controlRadius),
+          borderRadius:
+              BorderRadius.circular(widget.captureTheme.controlRadius),
           child:
               Image.file(File(state.capturedPreviewPath!), fit: BoxFit.contain),
         );
@@ -263,14 +264,15 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
           return const Center(child: CircularProgressIndicator());
         }
         return ClipRRect(
-          borderRadius: BorderRadius.circular(widget.sdkTheme.controlRadius),
+          borderRadius:
+              BorderRadius.circular(widget.captureTheme.controlRadius),
           child: Stack(
             fit: StackFit.expand,
             children: [
               CameraPreview(controller),
               DocumentCaptureOverlay(
                 config: widget.config,
-                style: widget.sdkTheme.overlayStyle,
+                style: widget.captureTheme.overlayStyle,
               ),
             ],
           ),
@@ -290,7 +292,7 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
               child: Text(widget.strings.retakeButton),
             ),
           ),
-          SizedBox(width: widget.sdkTheme.spacing),
+          SizedBox(width: widget.captureTheme.spacing),
           Expanded(
             child: FilledButton(
               onPressed: () => widget.onCompleted(_result!),
@@ -315,7 +317,8 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
               child: Text(widget.strings.cancelButton),
             ),
           ),
-        if (widget.onCancel != null) SizedBox(width: widget.sdkTheme.spacing),
+        if (widget.onCancel != null)
+          SizedBox(width: widget.captureTheme.spacing),
         Expanded(
           child: FilledButton(
             onPressed: state.canCapture
