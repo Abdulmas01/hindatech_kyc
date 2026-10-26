@@ -23,8 +23,25 @@ iOS applications must provide `NSCameraUsageDescription` in `Info.plist`.
 
 ## Usage
 
-Add the package to your application, then launch the public capture view from a
-page or route:
+Create the verification on your trusted backend, then return its short-lived
+SDK token and capture manifest to the application. The application retains
+control of its own endpoint and authentication:
+
+```dart
+final client = await KycClient.bootstrap(
+  config: KycConfig(apiBaseUri: Uri.parse('https://api.example.com')),
+  sessionProvider: () async {
+    final response = await customerApi.createVerification();
+    return response.json;
+  },
+);
+```
+
+Never place a permanent customer API credential in the Flutter application.
+The backend must issue a token scoped to `client.session.verificationId` with a
+short expiry.
+
+Launch the public capture view from a page or route:
 
 ```dart
 DocumentCaptureView(
@@ -45,7 +62,7 @@ See [`example/`](example/) for a runnable integration using only the public API.
 ## Current foundation
 
 - SDK configuration
-- Short-lived session model
+- Validated short-lived session bootstrap
 - Server-provided capture manifest
 - Document-capture configuration and result models
 - Adaptive document-frame processing
