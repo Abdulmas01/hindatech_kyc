@@ -76,13 +76,22 @@ class DocumentImageNormalizer {
 
     final outputDirectory = await getTemporaryDirectory();
     final output = File(
-      '${outputDirectory.path}/hindatech_document_${DateTime.now().microsecondsSinceEpoch}.jpg',
+      '${outputDirectory.path}/document_capture_${DateTime.now().microsecondsSinceEpoch}.jpg',
     );
-    await output.writeAsBytes(
-      image.encodeJpg(normalized, quality: jpegQuality),
-      flush: true,
-    );
-    return output;
+    try {
+      await output.writeAsBytes(
+        image.encodeJpg(normalized, quality: jpegQuality),
+        flush: true,
+      );
+      return output;
+    } catch (error, stackTrace) {
+      try {
+        if (await output.exists()) await output.delete();
+      } catch (_) {
+        // Preserve the image-processing failure rather than masking its cause.
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
   }
 
   static ({int width, int height}) calculateOutputSize({

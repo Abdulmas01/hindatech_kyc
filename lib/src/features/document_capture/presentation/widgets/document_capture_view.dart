@@ -35,6 +35,10 @@ class DocumentCaptureView extends StatelessWidget {
     @visibleForTesting this.autoInitialize = true,
   });
 
+  /// Transfers ownership of the captured local files to the application.
+  ///
+  /// The application should call [DocumentCaptureResult.deleteLocalFiles]
+  /// after it finishes uploading or otherwise processing the result.
   final ValueChanged<DocumentCaptureResult> onCompleted;
   final VoidCallback? onCancel;
   final ValueChanged<Object>? onError;
@@ -110,6 +114,7 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
   late final DocumentBoundsDetector _boundsDetector;
   CameraController? _controller;
   DocumentCaptureResult? _result;
+  bool _resultOwnershipTransferred = false;
   Future<void>? _initialization;
   final DocumentQualityGuidanceService _qualityGuidance =
       DocumentQualityGuidanceService();
@@ -205,8 +210,14 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
         boundsDetector: _boundsDetector,
         config: widget.config,
       );
-      if (!mounted) return;
-      setState(() => _result = result);
+      if (!mounted) {
+        await result.deleteLocalFiles();
+        return;
+      }
+      setState(() {
+        _result = result;
+        _resultOwnershipTransferred = false;
+      });
       notifier.setCaptured(result.normalizedPath);
     } catch (error) {
       if (!mounted) return;
@@ -216,10 +227,36 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
   }
 
   void _retake() {
+    final discardedResult = _result;
+    final shouldDelete = !_resultOwnershipTransferred;
     _qualityGuidance.reset();
     _cancelAutoCapture();
-    setState(() => _result = null);
+    setState(() {
+      _result = null;
+      _resultOwnershipTransferred = false;
+    });
+    if (shouldDelete && discardedResult != null) {
+      unawaited(_deleteResult(discardedResult, reportError: true));
+    }
     ref.read(documentCaptureProvider.notifier).clearCaptured();
+  }
+
+  void _completeCapture() {
+    final result = _result;
+    if (result == null || _resultOwnershipTransferred) return;
+    setState(() => _resultOwnershipTransferred = true);
+    widget.onCompleted(result);
+  }
+
+  Future<void> _deleteResult(
+    DocumentCaptureResult result, {
+    required bool reportError,
+  }) async {
+    try {
+      await result.deleteLocalFiles();
+    } catch (error) {
+      if (reportError && mounted) widget.onError?.call(error);
+    }
   }
 
   void _subscribeToQualityAssessments() {
@@ -294,6 +331,10 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
 
   @override
   void dispose() {
+    final abandonedResult = _result;
+    if (!_resultOwnershipTransferred && abandonedResult != null) {
+      unawaited(_deleteResult(abandonedResult, reportError: false));
+    }
     WidgetsBinding.instance.removeObserver(this);
     _cancelAutoCapture();
     unawaited(_qualitySubscription?.cancel());
@@ -416,7 +457,7 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
           SizedBox(width: widget.captureTheme.spacing),
           Expanded(
             child: FilledButton(
-              onPressed: () => widget.onCompleted(_result!),
+              onPressed: _resultOwnershipTransferred ? null : _completeCapture,
               child: Text(widget.strings.continueButton),
             ),
           ),

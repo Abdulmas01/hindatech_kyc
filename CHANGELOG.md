@@ -15,3 +15,4 @@
 - Add customer-controlled verification session bootstrap with typed failures.
 - Add centralized verification endpoints and session-authorized networking.
 - Add advisory quality signals, host-controlled guidance, and auto-capture.
+- Add explicit lifecycle management for sensitive local capture files.

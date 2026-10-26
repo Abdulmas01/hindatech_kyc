@@ -49,18 +49,28 @@ the SDK can release its network resources.
 Launch the public capture view from a page or route:
 
 ```dart
+Future<void> handleDocumentCapture(DocumentCaptureResult result) async {
+  try {
+    await uploadNormalizedDocument(result.normalizedPath);
+  } finally {
+    await result.deleteLocalFiles();
+  }
+}
+
 DocumentCaptureView(
   config: const DocumentCaptureConfig.highQuality(),
-  onCompleted: (result) {
-    final normalizedImagePath = result.normalizedPath;
-    // Send the normalized image through your application's verification flow.
-  },
+  onCompleted: handleDocumentCapture,
   onCancel: () => Navigator.of(context).pop(),
   onError: (error) {
     // Present an appropriate message or record the failure.
   },
 )
 ```
+
+The capture view deletes files discarded with Retake or abandoned before the
+Continue action. After Continue invokes `onCompleted`, ownership transfers to
+the host application. Delete both local images with `result.deleteLocalFiles()`
+after upload, cancellation, or any other processing finishes.
 
 See [`example/`](example/) for a runnable integration using only the public API.
 
@@ -96,6 +106,7 @@ DocumentCaptureView(
 - Host-controlled advisory quality guidance and auto-capture
 - Camera permission, selection, initialization, and lifecycle handling
 - Document bounds detection, cropping, orientation correction, and resizing
+- Explicit ownership and cleanup for temporary document images
 - Lifecycle-safe document-capture state
 - Customizable document framing overlay
 - Customer-configurable copy and visual tokens

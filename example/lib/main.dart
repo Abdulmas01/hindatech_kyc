@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:hindatech_kyc/hindatech_kyc.dart';
 
@@ -34,9 +36,24 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
     final result = await Navigator.of(context).push<DocumentCaptureResult>(
       MaterialPageRoute(builder: (_) => const DocumentCapturePage()),
     );
-    if (result != null && mounted) {
-      setState(() => _lastCapture = result);
+    if (result == null) return;
+    if (!mounted) {
+      await result.deleteLocalFiles();
+      return;
     }
+
+    final previousCapture = _lastCapture;
+    setState(() => _lastCapture = result);
+    await previousCapture?.deleteLocalFiles();
+  }
+
+  @override
+  void dispose() {
+    final lastCapture = _lastCapture;
+    if (lastCapture != null) {
+      unawaited(lastCapture.deleteLocalFiles());
+    }
+    super.dispose();
   }
 
   @override
