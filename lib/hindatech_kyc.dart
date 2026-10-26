@@ -1,6 +1,7 @@
 library;
 
 export 'src/client/kyc_client.dart';
+export 'src/core/network/api_exception.dart';
 export 'src/features/document_capture/domain/models/document_capture_config.dart';
 export 'src/features/document_capture/domain/models/document_capture_result.dart';
 export 'src/features/document_capture/presentation/widgets/document_capture_overlay.dart';

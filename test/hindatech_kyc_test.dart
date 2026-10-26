@@ -64,12 +64,29 @@ void main() {
 
   test('KycConfig provides conservative defaults', () {
     final config = KycConfig(
-      apiBaseUri: Uri.parse('https://api.hindatech.com'),
+      apiBaseUri: Uri.parse('https://api.example.com/api/v1/'),
     );
 
     expect(config.requestTimeout, const Duration(seconds: 30));
     expect(config.pollingInterval, const Duration(seconds: 2));
     expect(config.maxPollingAttempts, 30);
     expect(config.enableLocalQualityGuidance, isTrue);
+  });
+
+  test('KycConfig rejects non-positive timing values', () {
+    expect(
+      () => KycConfig(
+        apiBaseUri: Uri.parse('https://api.example.com/api/v1/'),
+        requestTimeout: Duration.zero,
+      ),
+      throwsAssertionError,
+    );
+    expect(
+      () => KycConfig(
+        apiBaseUri: Uri.parse('https://api.example.com/api/v1/'),
+        pollingInterval: Duration.zero,
+      ),
+      throwsAssertionError,
+    );
   });
 }

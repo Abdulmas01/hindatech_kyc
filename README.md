@@ -29,7 +29,9 @@ control of its own endpoint and authentication:
 
 ```dart
 final client = await KycClient.bootstrap(
-  config: KycConfig(apiBaseUri: Uri.parse('https://api.example.com')),
+  config: KycConfig(
+    apiBaseUri: Uri.parse('https://api.example.com/api/v1/'),
+  ),
   sessionProvider: () async {
     final response = await customerApi.createVerification();
     return response.json;
@@ -40,6 +42,9 @@ final client = await KycClient.bootstrap(
 Never place a permanent customer API credential in the Flutter application.
 The backend must issue a token scoped to `client.session.verificationId` with a
 short expiry.
+
+Call `client.close()` when the verification flow is permanently finished so
+the SDK can release its network resources.
 
 Launch the public capture view from a page or route:
 
@@ -63,6 +68,7 @@ See [`example/`](example/) for a runnable integration using only the public API.
 
 - SDK configuration
 - Validated short-lived session bootstrap
+- Centralized, session-authorized API transport and endpoint definitions
 - Server-provided capture manifest
 - Document-capture configuration and result models
 - Adaptive document-frame processing

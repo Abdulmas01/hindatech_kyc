@@ -13,3 +13,4 @@
 - Add a runnable customer integration example for Android and iOS.
 - Use domain-based names for public configuration, capture, and session APIs.
 - Add customer-controlled verification session bootstrap with typed failures.
+- Add centralized verification endpoints and session-authorized networking.

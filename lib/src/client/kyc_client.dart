@@ -1,4 +1,5 @@
 import '../config/kyc_config.dart';
+import '../core/network/session_api_client.dart';
 import '../session/session_bootstrap_exception.dart';
 import '../session/verification_session.dart';
 
@@ -11,13 +12,14 @@ typedef VerificationSessionProvider = Future<Map<String, Object?>> Function();
 
 /// Holds the validated configuration and session used by an SDK workflow.
 class KycClient {
-  const KycClient._({
+  KycClient._({
     required this.config,
     required this.session,
-  });
+  }) : _apiClient = SessionApiClient(config: config, session: session);
 
   final KycConfig config;
   final VerificationSession session;
+  final SessionApiClient _apiClient;
 
   /// Creates a client from an already parsed session.
   ///
@@ -75,4 +77,7 @@ class KycClient {
       );
     }
   }
+
+  /// Releases network resources owned by this client.
+  void close() => _apiClient.close();
 }

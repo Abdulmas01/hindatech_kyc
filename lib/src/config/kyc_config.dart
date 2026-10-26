@@ -11,7 +11,9 @@ class KycConfig {
     this.enableLocalQualityGuidance = true,
     this.theme = const DocumentCaptureTheme(),
     this.strings = const DocumentCaptureStrings(),
-  }) : assert(maxPollingAttempts > 0);
+  })  : assert(requestTimeout > Duration.zero),
+        assert(pollingInterval > Duration.zero),
+        assert(maxPollingAttempts > 0);
 
   final Uri apiBaseUri;
   final Duration requestTimeout;
