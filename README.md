@@ -64,6 +64,27 @@ DocumentCaptureView(
 
 See [`example/`](example/) for a runnable integration using only the public API.
 
+## Local quality guidance
+
+Camera-quality observations are optional and advisory. The host application
+may supply a local `Stream<DocumentQualityAssessment>`, customize all guidance
+copy and colors, disable auto-capture, or disable quality guidance entirely.
+These observations never determine the verification result.
+
+```dart
+final captureConfig = const DocumentCaptureConfig.balanced().copyWith(
+  autoCaptureEnabled: false,
+  qualityGuidanceMode: DocumentQualityGuidanceMode.advisory,
+);
+
+DocumentCaptureView(
+  config: captureConfig,
+  qualityAssessments: localAssessor.assessments,
+  onQualityError: reportNonBlockingQualityError,
+  onCompleted: handleCapture,
+)
+```
+
 ## Current foundation
 
 - SDK configuration
@@ -72,6 +93,7 @@ See [`example/`](example/) for a runnable integration using only the public API.
 - Server-provided capture manifest
 - Document-capture configuration and result models
 - Adaptive document-frame processing
+- Host-controlled advisory quality guidance and auto-capture
 - Camera permission, selection, initialization, and lifecycle handling
 - Document bounds detection, cropping, orientation correction, and resizing
 - Lifecycle-safe document-capture state
@@ -80,5 +102,5 @@ See [`example/`](example/) for a runnable integration using only the public API.
 - Guided document capture view with capture, retake, and lifecycle handling
 - Runnable Android and iOS integration example
 
-Live quality guidance, upload orchestration, and polling will be added
-incrementally.
+The package does not currently bundle a production-approved quality model.
+Upload orchestration and polling will be added incrementally.

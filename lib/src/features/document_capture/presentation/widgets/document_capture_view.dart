@@ -14,9 +14,12 @@ import '../../data/services/document_camera_controller_factory.dart';
 import '../../data/services/document_capture_service.dart';
 import '../../domain/models/document_capture_config.dart';
 import '../../domain/models/document_capture_result.dart';
+import '../../domain/models/document_quality_assessment.dart';
+import '../../domain/services/document_quality_guidance_service.dart';
 import '../controllers/document_capture_notifier.dart';
 import '../models/document_capture_state.dart';
 import 'document_capture_overlay.dart';
+import 'document_quality_guidance_banner.dart';
 
 class DocumentCaptureView extends StatelessWidget {
   const DocumentCaptureView({
@@ -24,6 +27,8 @@ class DocumentCaptureView extends StatelessWidget {
     super.key,
     this.onCancel,
     this.onError,
+    this.onQualityError,
+    this.qualityAssessments,
     this.config = const DocumentCaptureConfig.balanced(),
     this.strings = const DocumentCaptureStrings(),
     this.theme = const DocumentCaptureTheme(),
@@ -33,6 +38,15 @@ class DocumentCaptureView extends StatelessWidget {
   final ValueChanged<DocumentCaptureResult> onCompleted;
   final VoidCallback? onCancel;
   final ValueChanged<Object>? onError;
+
+  /// Receives non-blocking failures from a customer-supplied quality stream.
+  final ValueChanged<Object>? onQualityError;
+
+  /// Optional device-local quality observations supplied by the host app.
+  ///
+  /// These observations affect capture guidance and optional auto-capture only.
+  /// They never determine the verification result.
+  final Stream<DocumentQualityAssessment>? qualityAssessments;
   final DocumentCaptureConfig config;
   final DocumentCaptureStrings strings;
   final DocumentCaptureTheme theme;
@@ -45,6 +59,8 @@ class DocumentCaptureView extends StatelessWidget {
         onCompleted: onCompleted,
         onCancel: onCancel,
         onError: onError,
+        onQualityError: onQualityError,
+        qualityAssessments: qualityAssessments,
         config: config,
         strings: strings,
         captureTheme: theme,
@@ -63,11 +79,15 @@ class _DocumentCaptureBody extends ConsumerStatefulWidget {
     required this.autoInitialize,
     this.onCancel,
     this.onError,
+    this.onQualityError,
+    this.qualityAssessments,
   });
 
   final ValueChanged<DocumentCaptureResult> onCompleted;
   final VoidCallback? onCancel;
   final ValueChanged<Object>? onError;
+  final ValueChanged<Object>? onQualityError;
+  final Stream<DocumentQualityAssessment>? qualityAssessments;
   final DocumentCaptureConfig config;
   final DocumentCaptureStrings strings;
   final DocumentCaptureTheme captureTheme;
@@ -91,6 +111,10 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
   CameraController? _controller;
   DocumentCaptureResult? _result;
   Future<void>? _initialization;
+  final DocumentQualityGuidanceService _qualityGuidance =
+      DocumentQualityGuidanceService();
+  StreamSubscription<DocumentQualityAssessment>? _qualitySubscription;
+  Timer? _autoCaptureTimer;
 
   @override
   void initState() {
@@ -98,8 +122,18 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
     WidgetsBinding.instance.addObserver(this);
     _lifecycle = CameraLifecycleCoordinator(onError: widget.onError);
     _boundsDetector = MlKitDocumentBoundsDetector();
+    _subscribeToQualityAssessments();
     if (widget.autoInitialize) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _DocumentCaptureBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.qualityAssessments, widget.qualityAssessments) ||
+        !identical(oldWidget.config, widget.config)) {
+      _subscribeToQualityAssessments();
     }
   }
 
@@ -112,6 +146,7 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
       return;
     }
     _lifecycle.setActive(false);
+    _cancelAutoCapture();
     unawaited(_disposeCamera());
   }
 
@@ -156,9 +191,13 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
   }
 
   Future<void> _capture() async {
-    final controller = _controller;
-    if (controller == null || !controller.value.isInitialized) return;
     final notifier = ref.read(documentCaptureProvider.notifier);
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) {
+      notifier.setAutoCapturing(false);
+      return;
+    }
+    _cancelAutoCapture();
     notifier.setDetecting(true);
     try {
       final result = await _captureService.capture(
@@ -177,8 +216,74 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
   }
 
   void _retake() {
+    _qualityGuidance.reset();
+    _cancelAutoCapture();
     setState(() => _result = null);
     ref.read(documentCaptureProvider.notifier).clearCaptured();
+  }
+
+  void _subscribeToQualityAssessments() {
+    unawaited(_qualitySubscription?.cancel());
+    _qualitySubscription = null;
+    _qualityGuidance.reset();
+    _cancelAutoCapture();
+
+    if (widget.config.qualityGuidanceMode ==
+            DocumentQualityGuidanceMode.disabled ||
+        widget.qualityAssessments == null) {
+      return;
+    }
+
+    _qualitySubscription = widget.qualityAssessments!.listen(
+      _handleQualityAssessment,
+      onError: (Object error, StackTrace stackTrace) {
+        _cancelAutoCapture();
+        widget.onQualityError?.call(error);
+      },
+    );
+  }
+
+  void _handleQualityAssessment(DocumentQualityAssessment assessment) {
+    if (!mounted ||
+        widget.config.qualityGuidanceMode ==
+            DocumentQualityGuidanceMode.disabled) {
+      return;
+    }
+
+    final guidance = _qualityGuidance.evaluate(
+      assessment: assessment,
+      stabilityFrames: widget.config.guidanceStabilityFrames,
+    );
+    ref.read(documentCaptureProvider.notifier).updateQuality(guidance);
+    _syncAutoCapture(guidance);
+  }
+
+  void _syncAutoCapture(DocumentQualityGuidance guidance) {
+    final state = ref.read(documentCaptureProvider);
+    if (!widget.config.autoCaptureEnabled ||
+        !guidance.suggestsCaptureReady ||
+        !state.canCapture) {
+      _cancelAutoCapture();
+      return;
+    }
+    if (_autoCaptureTimer?.isActive ?? false) return;
+
+    _autoCaptureTimer = Timer(widget.config.autoCaptureHoldDuration, () {
+      if (!mounted) return;
+      final current = ref.read(documentCaptureProvider);
+      if (!widget.config.autoCaptureEnabled ||
+          !current.canCapture ||
+          !current.suggestsCaptureReady) {
+        return;
+      }
+      ref.read(documentCaptureProvider.notifier).setAutoCapturing(true);
+      unawaited(_capture());
+    });
+  }
+
+  void _cancelAutoCapture() {
+    _autoCaptureTimer?.cancel();
+    _autoCaptureTimer = null;
   }
 
   Future<void> _disposeCamera() async {
@@ -190,6 +295,8 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _cancelAutoCapture();
+    unawaited(_qualitySubscription?.cancel());
     _lifecycle.markDisposed();
     unawaited(_disposeCamera());
     unawaited(_boundsDetector.close());
@@ -274,6 +381,20 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
                 config: widget.config,
                 style: widget.captureTheme.overlayStyle,
               ),
+              if (widget.config.qualityGuidanceMode ==
+                      DocumentQualityGuidanceMode.advisory &&
+                  state.qualityConfidence > 0)
+                Positioned(
+                  left: widget.captureTheme.spacing,
+                  right: widget.captureTheme.spacing,
+                  bottom: widget.captureTheme.spacing,
+                  child: DocumentQualityGuidanceBanner(
+                    signal: state.qualitySignal,
+                    isStable: state.isQualityStable,
+                    strings: widget.strings,
+                    captureTheme: widget.captureTheme,
+                  ),
+                ),
             ],
           ),
         );
@@ -321,7 +442,7 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
           SizedBox(width: widget.captureTheme.spacing),
         Expanded(
           child: FilledButton(
-            onPressed: state.canCapture
+            onPressed: state.canCapture && !state.isAutoCapturing
                 ? _capture
                 : permanentlyDenied
                     ? _permissionService.openSettings
@@ -333,7 +454,9 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
                   ? widget.strings.openSettingsButton
                   : retryable
                       ? widget.strings.retryButton
-                      : widget.strings.captureButton,
+                      : state.isAutoCapturing
+                          ? widget.strings.autoCapturingButton
+                          : widget.strings.captureButton,
             ),
           ),
         ),

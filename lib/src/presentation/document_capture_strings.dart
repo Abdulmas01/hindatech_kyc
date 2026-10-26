@@ -14,7 +14,14 @@ class DocumentCaptureStrings {
     this.documentCaptureFailedMessage =
         'The document could not be captured. Please try again.',
     this.documentCaptureFailedTitle = 'Capture failed',
+    this.qualityEvaluatingMessage = 'Checking image quality...',
+    this.qualityReadyMessage = 'Hold steady for capture.',
+    this.qualityBlurryMessage = 'Hold still for a clearer image.',
+    this.qualityGlareMessage = 'Tilt the document to reduce glare.',
+    this.qualityDarkMessage = 'Move to a brighter area.',
+    this.qualityNoDocumentMessage = 'Place the document inside the frame.',
     this.captureButton = 'Capture document',
+    this.autoCapturingButton = 'Capturing...',
     this.retryButton = 'Try again',
     this.openSettingsButton = 'Open settings',
     this.retakeButton = 'Retake',
@@ -31,7 +38,14 @@ class DocumentCaptureStrings {
   final String cameraUnavailableMessage;
   final String documentCaptureFailedMessage;
   final String documentCaptureFailedTitle;
+  final String qualityEvaluatingMessage;
+  final String qualityReadyMessage;
+  final String qualityBlurryMessage;
+  final String qualityGlareMessage;
+  final String qualityDarkMessage;
+  final String qualityNoDocumentMessage;
   final String captureButton;
+  final String autoCapturingButton;
   final String retryButton;
   final String openSettingsButton;
   final String retakeButton;

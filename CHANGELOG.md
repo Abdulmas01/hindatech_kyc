@@ -14,3 +14,4 @@
 - Use domain-based names for public configuration, capture, and session APIs.
 - Add customer-controlled verification session bootstrap with typed failures.
 - Add centralized verification endpoints and session-authorized networking.
+- Add advisory quality signals, host-controlled guidance, and auto-capture.

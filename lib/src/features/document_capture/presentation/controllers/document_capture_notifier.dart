@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/models/document_quality_assessment.dart';
 import '../../domain/services/document_quality_guidance_service.dart';
 import '../models/document_capture_state.dart';
 
@@ -63,6 +64,10 @@ class DocumentCaptureNotifier
     state = state.copyWith(
       phase: DocumentCapturePhase.ready,
       documentDetected: false,
+      qualitySignal: DocumentQualitySignal.unknown,
+      qualityConfidence: 0,
+      isQualityStable: false,
+      suggestsCaptureReady: false,
       capturedPreviewPath: null,
     );
   }
@@ -78,6 +83,16 @@ class DocumentCaptureNotifier
       isQualityStable: guidance.isStable,
       suggestsCaptureReady: guidance.suggestsCaptureReady,
       error: null,
+    );
+  }
+
+  void clearQualityGuidance() {
+    state = state.copyWith(
+      qualitySignal: DocumentQualitySignal.unknown,
+      qualityConfidence: 0,
+      isQualityStable: false,
+      suggestsCaptureReady: false,
+      isAutoCapturing: false,
     );
   }
 

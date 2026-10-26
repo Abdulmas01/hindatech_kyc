@@ -118,4 +118,47 @@ class DocumentCaptureConfig {
   final double guideAspectRatio;
   final double guideMaxHeightFactor;
   final double qualityCropScale;
+
+  DocumentCaptureConfig copyWith({
+    DocumentCaptureResolution? resolution,
+    int? initialFrameStride,
+    int? minFrameStride,
+    int? maxFrameStride,
+    int? strideAdjustmentWindow,
+    double? increaseStrideInferenceMs,
+    double? decreaseStrideInferenceMs,
+    Duration? autoCaptureHoldDuration,
+    bool? autoCaptureEnabled,
+    int? guidanceStabilityFrames,
+    DocumentQualityGuidanceMode? qualityGuidanceMode,
+    DocumentFrameProfile? frameProfile,
+    double? guideWidthFactor,
+    double? guideAspectRatio,
+    double? guideMaxHeightFactor,
+    double? qualityCropScale,
+  }) {
+    return DocumentCaptureConfig(
+      resolution: resolution ?? this.resolution,
+      initialFrameStride: initialFrameStride ?? this.initialFrameStride,
+      minFrameStride: minFrameStride ?? this.minFrameStride,
+      maxFrameStride: maxFrameStride ?? this.maxFrameStride,
+      strideAdjustmentWindow:
+          strideAdjustmentWindow ?? this.strideAdjustmentWindow,
+      increaseStrideInferenceMs:
+          increaseStrideInferenceMs ?? this.increaseStrideInferenceMs,
+      decreaseStrideInferenceMs:
+          decreaseStrideInferenceMs ?? this.decreaseStrideInferenceMs,
+      autoCaptureHoldDuration:
+          autoCaptureHoldDuration ?? this.autoCaptureHoldDuration,
+      autoCaptureEnabled: autoCaptureEnabled ?? this.autoCaptureEnabled,
+      guidanceStabilityFrames:
+          guidanceStabilityFrames ?? this.guidanceStabilityFrames,
+      qualityGuidanceMode: qualityGuidanceMode ?? this.qualityGuidanceMode,
+      frameProfile: frameProfile ?? this.frameProfile,
+      guideWidthFactor: guideWidthFactor ?? this.guideWidthFactor,
+      guideAspectRatio: guideAspectRatio ?? this.guideAspectRatio,
+      guideMaxHeightFactor: guideMaxHeightFactor ?? this.guideMaxHeightFactor,
+      qualityCropScale: qualityCropScale ?? this.qualityCropScale,
+    );
+  }
 }

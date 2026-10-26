@@ -26,6 +26,16 @@ void main() {
     expect(result.usedGuideCropFallback, isTrue);
   });
 
+  test('host app can disable advisory guidance and auto-capture', () {
+    final config = const DocumentCaptureConfig.balanced().copyWith(
+      qualityGuidanceMode: DocumentQualityGuidanceMode.disabled,
+      autoCaptureEnabled: false,
+    );
+
+    expect(config.qualityGuidanceMode, DocumentQualityGuidanceMode.disabled);
+    expect(config.autoCaptureEnabled, isFalse);
+  });
+
   test('runtime controller throttles frame processing', () {
     final controller = DocumentCaptureRuntimeController(initialFrameStride: 2);
 
