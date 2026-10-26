@@ -2,6 +2,14 @@ enum DocumentCaptureResolution { low, medium, high, veryHigh }
 
 enum DocumentFrameProfile { compact, standard, wide }
 
+/// Controls whether local camera-quality observations affect capture guidance.
+enum DocumentQualityGuidanceMode {
+  disabled,
+
+  /// Shows capture advice without making an identity-verification decision.
+  advisory,
+}
+
 class DocumentCaptureConfig {
   const DocumentCaptureConfig({
     required this.resolution,
@@ -14,6 +22,7 @@ class DocumentCaptureConfig {
     required this.autoCaptureHoldDuration,
     required this.autoCaptureEnabled,
     required this.guidanceStabilityFrames,
+    this.qualityGuidanceMode = DocumentQualityGuidanceMode.advisory,
     this.frameProfile = DocumentFrameProfile.standard,
     double? guideWidthFactor,
     double? guideAspectRatio,
@@ -23,6 +32,7 @@ class DocumentCaptureConfig {
         assert(initialFrameStride >= minFrameStride),
         assert(initialFrameStride <= maxFrameStride),
         assert(strideAdjustmentWindow > 0),
+        assert(guidanceStabilityFrames > 0),
         guideWidthFactor = guideWidthFactor ??
             (frameProfile == DocumentFrameProfile.compact
                 ? 0.78
@@ -49,6 +59,7 @@ class DocumentCaptureConfig {
         autoCaptureHoldDuration = const Duration(milliseconds: 1500),
         autoCaptureEnabled = true,
         guidanceStabilityFrames = 3,
+        qualityGuidanceMode = DocumentQualityGuidanceMode.advisory,
         frameProfile = DocumentFrameProfile.standard,
         guideWidthFactor = 0.86,
         guideAspectRatio = 0.63,
@@ -66,6 +77,7 @@ class DocumentCaptureConfig {
         autoCaptureHoldDuration = const Duration(milliseconds: 1200),
         autoCaptureEnabled = true,
         guidanceStabilityFrames = 2,
+        qualityGuidanceMode = DocumentQualityGuidanceMode.advisory,
         frameProfile = DocumentFrameProfile.standard,
         guideWidthFactor = 0.86,
         guideAspectRatio = 0.63,
@@ -83,6 +95,7 @@ class DocumentCaptureConfig {
         autoCaptureHoldDuration = const Duration(milliseconds: 1700),
         autoCaptureEnabled = true,
         guidanceStabilityFrames = 4,
+        qualityGuidanceMode = DocumentQualityGuidanceMode.advisory,
         frameProfile = DocumentFrameProfile.standard,
         guideWidthFactor = 0.86,
         guideAspectRatio = 0.63,
@@ -99,6 +112,7 @@ class DocumentCaptureConfig {
   final Duration autoCaptureHoldDuration;
   final bool autoCaptureEnabled;
   final int guidanceStabilityFrames;
+  final DocumentQualityGuidanceMode qualityGuidanceMode;
   final DocumentFrameProfile frameProfile;
   final double guideWidthFactor;
   final double guideAspectRatio;

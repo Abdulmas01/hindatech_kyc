@@ -1,3 +1,5 @@
+import '../../domain/models/document_quality_assessment.dart';
+
 enum DocumentCapturePhase {
   initializing,
   ready,
@@ -15,7 +17,9 @@ class DocumentCaptureState {
   const DocumentCaptureState({
     this.phase = DocumentCapturePhase.initializing,
     this.documentDetected = false,
-    this.isQualityAcceptable = false,
+    this.qualitySignal = DocumentQualitySignal.unknown,
+    this.isQualityStable = false,
+    this.suggestsCaptureReady = false,
     this.qualityConfidence = 0,
     this.isAutoCapturing = false,
     this.capturedPreviewPath,
@@ -24,7 +28,9 @@ class DocumentCaptureState {
 
   final DocumentCapturePhase phase;
   final bool documentDetected;
-  final bool isQualityAcceptable;
+  final DocumentQualitySignal qualitySignal;
+  final bool isQualityStable;
+  final bool suggestsCaptureReady;
   final double qualityConfidence;
   final bool isAutoCapturing;
   final String? capturedPreviewPath;
@@ -37,7 +43,9 @@ class DocumentCaptureState {
   DocumentCaptureState copyWith({
     DocumentCapturePhase? phase,
     bool? documentDetected,
-    bool? isQualityAcceptable,
+    DocumentQualitySignal? qualitySignal,
+    bool? isQualityStable,
+    bool? suggestsCaptureReady,
     double? qualityConfidence,
     bool? isAutoCapturing,
     Object? capturedPreviewPath = _unset,
@@ -46,7 +54,9 @@ class DocumentCaptureState {
     return DocumentCaptureState(
       phase: phase ?? this.phase,
       documentDetected: documentDetected ?? this.documentDetected,
-      isQualityAcceptable: isQualityAcceptable ?? this.isQualityAcceptable,
+      qualitySignal: qualitySignal ?? this.qualitySignal,
+      isQualityStable: isQualityStable ?? this.isQualityStable,
+      suggestsCaptureReady: suggestsCaptureReady ?? this.suggestsCaptureReady,
       qualityConfidence: qualityConfidence ?? this.qualityConfidence,
       isAutoCapturing: isAutoCapturing ?? this.isAutoCapturing,
       capturedPreviewPath: identical(capturedPreviewPath, _unset)

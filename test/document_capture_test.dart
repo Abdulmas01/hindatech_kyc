@@ -9,6 +9,10 @@ void main() {
     expect(config.resolution, DocumentCaptureResolution.medium);
     expect(config.initialFrameStride, 5);
     expect(config.autoCaptureEnabled, isTrue);
+    expect(
+      config.qualityGuidanceMode,
+      DocumentQualityGuidanceMode.advisory,
+    );
     expect(config.guideWidthFactor, 0.86);
   });
 

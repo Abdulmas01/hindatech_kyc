@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/services/document_quality_guidance_service.dart';
 import '../models/document_capture_state.dart';
 
 class DocumentCaptureNotifier
@@ -70,13 +71,12 @@ class DocumentCaptureNotifier
     state = state.copyWith(isAutoCapturing: value);
   }
 
-  void updateQuality({
-    required double confidence,
-    required bool isAcceptable,
-  }) {
+  void updateQuality(DocumentQualityGuidance guidance) {
     state = state.copyWith(
-      qualityConfidence: confidence,
-      isQualityAcceptable: isAcceptable,
+      qualitySignal: guidance.signal,
+      qualityConfidence: guidance.confidence,
+      isQualityStable: guidance.isStable,
+      suggestsCaptureReady: guidance.suggestsCaptureReady,
       error: null,
     );
   }

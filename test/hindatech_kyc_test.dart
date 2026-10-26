@@ -70,7 +70,6 @@ void main() {
     expect(config.requestTimeout, const Duration(seconds: 30));
     expect(config.pollingInterval, const Duration(seconds: 2));
     expect(config.maxPollingAttempts, 30);
-    expect(config.enableLocalQualityGuidance, isTrue);
   });
 
   test('KycConfig rejects non-positive timing values', () {
