@@ -10,3 +10,4 @@
 - Add a customizable document framing overlay.
 - Add customer-configurable copy and visual tokens.
 - Add the guided document capture view.
+- Add a runnable customer integration example for Android and iOS.

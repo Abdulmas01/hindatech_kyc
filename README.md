@@ -21,6 +21,27 @@ Android applications must declare camera access in `AndroidManifest.xml`:
 
 iOS applications must provide `NSCameraUsageDescription` in `Info.plist`.
 
+## Usage
+
+Add the package to your application, then launch the public capture view from a
+page or route:
+
+```dart
+DocumentCaptureView(
+  config: const DocumentCaptureConfig.highQuality(),
+  onCompleted: (result) {
+    final normalizedImagePath = result.normalizedPath;
+    // Send the normalized image through your application's verification flow.
+  },
+  onCancel: () => Navigator.of(context).pop(),
+  onError: (error) {
+    // Present an appropriate message or record the failure.
+  },
+)
+```
+
+See [`example/`](example/) for a runnable integration using only the public API.
+
 ## Current foundation
 
 - SDK configuration
@@ -34,6 +55,7 @@ iOS applications must provide `NSCameraUsageDescription` in `Info.plist`.
 - Customizable document framing overlay
 - Customer-configurable copy and visual tokens
 - Guided document capture view with capture, retake, and lifecycle handling
+- Runnable Android and iOS integration example
 
 Live quality guidance, upload orchestration, and polling will be added
 incrementally.
