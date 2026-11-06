@@ -1,5 +1,20 @@
 import 'verification_required_inputs.dart';
 
+/// Input for staging one workflow-declared asset.
+class HostedAssetUploadRequest {
+  const HostedAssetUploadRequest({
+    required this.inputType,
+    required this.filePath,
+    this.contentType,
+  });
+
+  final String inputType;
+  final String filePath;
+
+  /// Optional MIME type override. File extensions are used when omitted.
+  final String? contentType;
+}
+
 /// A temporary asset staged by the NestJS hosted-upload endpoint.
 ///
 /// [assetKey] is an opaque submission identifier, not a public file URL.

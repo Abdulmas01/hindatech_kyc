@@ -79,15 +79,13 @@ class KycClient {
 
   /// Stages one workflow-declared asset through the NestJS hosted upload.
   ///
-  /// Repeated uploads for the same [inputType] create separate staged assets.
+  /// Repeated uploads for the same input type create separate staged assets.
   /// Keep the returned [HostedAsset.assetKey] and submit that exact key later.
   /// After an ambiguous timeout, recover session state before retrying.
-  Future<HostedAsset> uploadHostedAsset({
-    required String inputType,
-    required String filePath,
-    String? contentType,
-  }) async {
-    final normalizedInputType = inputType.trim();
+  Future<HostedAsset> uploadHostedAsset(
+    HostedAssetUploadRequest request,
+  ) async {
+    final normalizedInputType = request.inputType.trim();
     if (!session.allows(VerificationSessionAction.uploadAsset)) {
       throw StateError('This session does not allow asset upload.');
     }
@@ -98,15 +96,18 @@ class KycClient {
     }
     if (!session.requiredInputs.allowsAssetType(normalizedInputType)) {
       throw ArgumentError.value(
-        inputType,
+        request.inputType,
         'inputType',
         'Must be declared by the verification workflow.',
       );
     }
 
-    final file = File(filePath);
+    final file = File(request.filePath);
     if (!await file.exists()) {
-      throw FileSystemException('The upload file does not exist.', filePath);
+      throw FileSystemException(
+        'The upload file does not exist.',
+        request.filePath,
+      );
     }
     final sizeBytes = await file.length();
     if (sizeBytes > session.uploadPolicy.maxFileSizeBytes) {
@@ -117,8 +118,8 @@ class KycClient {
       );
     }
 
-    final resolvedContentType =
-        contentType?.trim().toLowerCase() ?? _contentTypeForPath(filePath);
+    final resolvedContentType = request.contentType?.trim().toLowerCase() ??
+        _contentTypeForPath(request.filePath);
     if (!session.uploadPolicy.acceptedMimeTypes.contains(resolvedContentType)) {
       throw ArgumentError.value(
         resolvedContentType,
@@ -130,7 +131,7 @@ class KycClient {
     final response = await _apiClient.postMultipart(
       _apiClient.endpoints.sdkHostedAssets(session.verificationSessionId),
       fields: {'inputType': normalizedInputType},
-      filePath: filePath,
+      filePath: request.filePath,
       contentType: resolvedContentType,
     );
 

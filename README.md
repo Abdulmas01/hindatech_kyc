@@ -53,8 +53,10 @@ Launch the public capture view from a page or route:
 Future<void> handleDocumentCapture(DocumentCaptureResult result) async {
   try {
     final hostedAsset = await client.uploadHostedAsset(
-      inputType: CaptureAssetType.documentFront.wireValue,
-      filePath: result.normalizedPath,
+      HostedAssetUploadRequest(
+        inputType: CaptureAssetType.documentFront.wireValue,
+        filePath: result.normalizedPath,
+      ),
     );
     selectedAssetKeys[hostedAsset.inputTypeValue] = hostedAsset.assetKey;
   } finally {
