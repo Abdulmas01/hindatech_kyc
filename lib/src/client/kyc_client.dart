@@ -2,11 +2,14 @@ import 'dart:io';
 
 import '../config/kyc_config.dart';
 import '../core/network/api_exception.dart';
+import '../core/network/multipart_file_request.dart';
 import '../core/network/session_api_client.dart';
 import '../session/hosted_asset.dart';
+import '../session/hosted_asset_submission.dart';
 import '../session/session_bootstrap_exception.dart';
 import '../session/verification_session.dart';
 import '../session/verification_session_policies.dart';
+import '../session/verification_session_state.dart';
 
 /// Loads a verification session from the application's trusted backend.
 ///
@@ -130,9 +133,11 @@ class KycClient {
 
     final response = await _apiClient.postMultipart(
       _apiClient.endpoints.sdkHostedAssets(session.verificationSessionId),
-      fields: {'inputType': normalizedInputType},
-      filePath: request.filePath,
-      contentType: resolvedContentType,
+      MultipartFileRequest(
+        fields: {'inputType': normalizedInputType},
+        filePath: request.filePath,
+        contentType: resolvedContentType,
+      ),
     );
 
     try {
@@ -156,6 +161,104 @@ class KycClient {
     if (path.endsWith('.jpg') || path.endsWith('.jpeg')) return 'image/jpeg';
     if (path.endsWith('.png')) return 'image/png';
     return 'application/octet-stream';
+  }
+
+  /// Recovers current SDK state and every unexpired staged hosted asset.
+  ///
+  /// Multiple assets may be returned for one input type. The caller must keep
+  /// or choose an exact [HostedAsset.assetKey] before submission.
+  Future<VerificationSessionState> recoverSession() async {
+    if (!session.allows(VerificationSessionAction.readSession)) {
+      throw StateError('This session does not allow state recovery.');
+    }
+
+    final response = await _apiClient.get(
+      _apiClient.endpoints.sdkVerificationSession(
+        session.verificationSessionId,
+      ),
+    );
+    try {
+      final state = VerificationSessionState.fromJson(response);
+      if (state.verificationSessionId != session.verificationSessionId ||
+          state.workflowKey != session.workflowKey) {
+        throw const FormatException('Recovered session identity is invalid.');
+      }
+      return state;
+    } catch (error) {
+      throw _invalidResponse(
+        'The verification service returned invalid session state.',
+        error,
+      );
+    }
+  }
+
+  /// Submits exact hosted asset keys selected for the workflow input slots.
+  Future<VerificationSubmission> submitHostedAssets(
+    HostedAssetSubmissionRequest request,
+  ) async {
+    if (!session.allows(VerificationSessionAction.submitSession)) {
+      throw StateError('This session does not allow submission.');
+    }
+    if (session.assetIngestionMode != AssetIngestionMode.smartKycHosted) {
+      throw StateError('This session does not use hosted asset submission.');
+    }
+    _validateHostedAssetSelection(request.assets);
+
+    final response = await _apiClient.post(
+      _apiClient.endpoints.sdkHostedAssetSubmit(
+        session.verificationSessionId,
+      ),
+      body: request.toJson(),
+    );
+    try {
+      final submission = VerificationSubmission.fromJson(response);
+      if (submission.verificationSessionId != session.verificationSessionId) {
+        throw const FormatException('Submitted session identity is invalid.');
+      }
+      return submission;
+    } catch (error) {
+      throw _invalidResponse(
+        'The verification service returned an invalid submission.',
+        error,
+      );
+    }
+  }
+
+  void _validateHostedAssetSelection(Map<String, String> assets) {
+    if (assets.isEmpty) {
+      throw ArgumentError.value(
+        assets,
+        'assets',
+        'Must contain the workflow asset selections.',
+      );
+    }
+    for (final entry in assets.entries) {
+      if (!session.requiredInputs.allowsAssetType(entry.key) ||
+          entry.value.trim().isEmpty) {
+        throw ArgumentError.value(
+          assets,
+          'assets',
+          'Contains an undeclared input type or empty asset key.',
+        );
+      }
+    }
+    final missingRequired = session.requiredInputs.requiredAssetTypes
+        .where((inputType) => !assets.containsKey(inputType));
+    if (missingRequired.isNotEmpty) {
+      throw ArgumentError.value(
+        assets,
+        'assets',
+        'Missing required workflow asset selections.',
+      );
+    }
+  }
+
+  static ApiException _invalidResponse(String message, Object cause) {
+    return ApiException(
+      failure: ApiFailure.invalidResponse,
+      message: message,
+      cause: cause,
+    );
   }
 
   /// Releases network resources owned by this client.

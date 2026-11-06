@@ -9,6 +9,7 @@ import '../../config/kyc_config.dart';
 import '../../session/verification_session.dart';
 import 'api_exception.dart';
 import 'api_endpoints.dart';
+import 'multipart_file_request.dart';
 
 /// Performs API requests authorized by one short-lived verification session.
 ///
@@ -38,11 +39,9 @@ class SessionApiClient {
       _send('POST', uri, body: body);
 
   Future<Map<String, Object?>> postMultipart(
-    Uri uri, {
-    required Map<String, String> fields,
-    required String filePath,
-    required String contentType,
-  }) async {
+    Uri uri,
+    MultipartFileRequest multipart,
+  ) async {
     _ensureSessionIsActive();
 
     final request = http.MultipartRequest('POST', uri)
@@ -50,12 +49,12 @@ class SessionApiClient {
         HttpHeaders.acceptHeader: 'application/json',
         HttpHeaders.authorizationHeader: 'Bearer ${_session.sdkToken}',
       })
-      ..fields.addAll(fields)
+      ..fields.addAll(multipart.fields)
       ..files.add(
         await http.MultipartFile.fromPath(
           'file',
-          filePath,
-          contentType: MediaType.parse(contentType),
+          multipart.filePath,
+          contentType: MediaType.parse(multipart.contentType),
         ),
       );
     return _sendRequest(request);

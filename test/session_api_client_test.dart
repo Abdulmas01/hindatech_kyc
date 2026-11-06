@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hindatech_kyc/hindatech_kyc.dart';
+import 'package:hindatech_kyc/src/core/network/multipart_file_request.dart';
 import 'package:hindatech_kyc/src/core/network/session_api_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -86,9 +87,11 @@ void main() {
 
     await transport.postMultipart(
       transport.endpoints.sdkHostedAssets('verification-id'),
-      fields: {'inputType': 'document_front'},
-      filePath: file.path,
-      contentType: 'image/jpeg',
+      MultipartFileRequest(
+        fields: {'inputType': 'document_front'},
+        filePath: file.path,
+        contentType: 'image/jpeg',
+      ),
     );
 
     expect(sentRequest.headers['authorization'], 'Bearer short-lived-token');

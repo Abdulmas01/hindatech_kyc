@@ -79,6 +79,20 @@ Choose the asset slot from `client.session.requiredInputs`. Keep the returned
 temporary asset. If an upload times out after the request may have reached the
 server, recover the session before retrying.
 
+```dart
+final recovered = await client.recoverSession();
+final frontCandidates = recovered
+    .hostedAssetsFor(CaptureAssetType.documentFront.wireValue)
+    .toList();
+
+final submission = await client.submitHostedAssets(
+  HostedAssetSubmissionRequest(assets: selectedAssetKeys),
+);
+```
+
+Recovery preserves every staged candidate. Select the intended candidate and
+submit its exact key; the SDK does not silently choose among duplicate uploads.
+
 The capture view deletes files discarded with Retake or abandoned before the
 Continue action. After Continue invokes `onCompleted`, ownership transfers to
 the host application. Delete both local images with `result.deleteLocalFiles()`
@@ -115,6 +129,8 @@ DocumentCaptureView(
 - NestJS-provided required asset and payload inputs
 - NestJS upload, polling, and re-bootstrap policies
 - Workflow-aware NestJS hosted asset upload and typed asset receipts
+- Session recovery with duplicate staged-asset preservation
+- Exact-key hosted asset submission
 - Document-capture configuration and result models
 - Adaptive document-frame processing
 - Host-controlled advisory quality guidance and auto-capture
@@ -128,4 +144,4 @@ DocumentCaptureView(
 - Runnable Android and iOS integration example
 
 The package does not currently bundle a production-approved quality model.
-Session recovery, asset submission, and polling will be added incrementally.
+Polling and remaining workflow orchestration will be added incrementally.
