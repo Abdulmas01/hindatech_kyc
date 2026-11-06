@@ -22,3 +22,4 @@
 - Add workflow-declared structured payload attachment.
 - Reuse strict NestJS contract readers across session response models.
 - Add cancellable, sequential session polling with host-controlled limits.
+- Add idempotent SDK session cancellation using the shared state contract.

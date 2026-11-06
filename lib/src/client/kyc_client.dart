@@ -216,6 +216,16 @@ class KycClient {
         session.verificationSessionId,
       ),
     );
+    return _parseSessionState(
+      response,
+      'The verification service returned invalid session state.',
+    );
+  }
+
+  VerificationSessionState _parseSessionState(
+    Map<String, Object?> response,
+    String invalidResponseMessage,
+  ) {
     try {
       final state = VerificationSessionState.fromJson(response);
       if (state.verificationSessionId != session.verificationSessionId ||
@@ -224,10 +234,7 @@ class KycClient {
       }
       return state;
     } catch (error) {
-      throw _invalidResponse(
-        'The verification service returned invalid session state.',
-        error,
-      );
+      throw _invalidResponse(invalidResponseMessage, error);
     }
   }
 
@@ -247,6 +254,25 @@ class KycClient {
         interval: options.interval ?? session.polling.recommendedInterval,
         timeout: options.timeout,
       ),
+    );
+  }
+
+  /// Cancels a mutable verification session and returns its current state.
+  ///
+  /// Successful retries return the same cancelled state. Local capture and
+  /// pending upload selections should be discarded after this succeeds.
+  Future<VerificationSessionState> cancelSession() async {
+    if (!session.allows(VerificationSessionAction.cancelSession)) {
+      throw StateError('This session does not allow cancellation.');
+    }
+    final response = await _apiClient.post(
+      _apiClient.endpoints.sdkVerificationCancel(
+        session.verificationSessionId,
+      ),
+    );
+    return _parseSessionState(
+      response,
+      'The verification service returned an invalid cancellation state.',
     );
   }
 

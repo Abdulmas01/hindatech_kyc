@@ -123,6 +123,15 @@ The host may provide `VerificationPollingOptions` to override the interval or
 set a timeout. Poll requests are sequential, stop at terminal states, and stop
 when the stream subscription is cancelled.
 
+Cancel a session before processing begins:
+
+```dart
+final cancelledState = await client.cancelSession();
+```
+
+After cancellation succeeds, stop capture and discard local pending upload
+state. Retrying cancellation safely returns the same cancelled state.
+
 The capture view deletes files discarded with Retake or abandoned before the
 Continue action. After Continue invokes `onCompleted`, ownership transfers to
 the host application. Delete both local images with `result.deleteLocalFiles()`
@@ -163,6 +172,7 @@ DocumentCaptureView(
 - Exact-key hosted asset submission
 - Workflow-declared structured payload attachment
 - Cancellable, sequential verification status polling
+- Idempotent pre-processing session cancellation
 - Document-capture configuration and result models
 - Adaptive document-frame processing
 - Host-controlled advisory quality guidance and auto-capture

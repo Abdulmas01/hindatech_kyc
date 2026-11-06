@@ -35,6 +35,13 @@ void main() {
       expect(_state(status).isTerminal, isFalse, reason: status);
     }
   });
+
+  test('parses the cancelled state returned by cancellation', () {
+    final state = _state('cancelled');
+
+    expect(state.status, VerificationSessionStatus.cancelled);
+    expect(state.isTerminal, isTrue);
+  });
 }
 
 VerificationSessionState _state(String status) {
