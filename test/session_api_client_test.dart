@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hindatech_kyc/hindatech_kyc.dart';
@@ -61,6 +62,42 @@ void main() {
     expect(response, isEmpty);
   });
 
+  test('encodes hosted assets as authorized multipart requests', () async {
+    final temporaryDirectory = await Directory.systemTemp.createTemp(
+      'hosted_asset_test_',
+    );
+    final file = File('${temporaryDirectory.path}/capture.jpg');
+    await file.writeAsBytes([1, 2, 3]);
+    addTearDown(() => temporaryDirectory.delete(recursive: true));
+
+    late http.MultipartRequest sentRequest;
+    final transport = SessionApiClient(
+      config: config,
+      session: _session(),
+      httpClient: MockClient.streaming((request, _) async {
+        sentRequest = request as http.MultipartRequest;
+        return http.StreamedResponse(
+          Stream.value(utf8.encode('{"assetKey":"asset-key"}')),
+          200,
+        );
+      }),
+    );
+    addTearDown(transport.close);
+
+    await transport.postMultipart(
+      transport.endpoints.sdkHostedAssets('verification-id'),
+      fields: {'inputType': 'document_front'},
+      filePath: file.path,
+      contentType: 'image/jpeg',
+    );
+
+    expect(sentRequest.headers['authorization'], 'Bearer short-lived-token');
+    expect(sentRequest.fields, {'inputType': 'document_front'});
+    expect(sentRequest.files.single.field, 'file');
+    expect(sentRequest.files.single.contentType.toString(), 'image/jpeg');
+    expect(await sentRequest.files.single.finalize().toBytes(), [1, 2, 3]);
+  });
+
   test('maps unauthorized responses without exposing the token', () async {
     final transport = SessionApiClient(
       config: config,
@@ -89,6 +126,50 @@ void main() {
                 isNot(contains('secret body')),
               ),
             ),
+      ),
+    );
+  });
+
+  test('preserves stable SDK error codes and safe details', () async {
+    final transport = SessionApiClient(
+      config: config,
+      session: _session(),
+      httpClient: MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'statusCode': 400,
+            'code': 'SDK_SUBMISSION_INPUTS_INVALID',
+            'message': 'Human-readable text.',
+            'requestId': 'req-secret',
+            'missingInputs': ['selfie_primary'],
+          }),
+          400,
+        ),
+      ),
+    );
+    addTearDown(transport.close);
+
+    await expectLater(
+      transport.post(
+        transport.endpoints.sdkHostedAssetSubmit('verification-id'),
+        body: const {},
+      ),
+      throwsA(
+        isA<ApiException>()
+            .having(
+          (exception) => exception.code,
+          'code',
+          'SDK_SUBMISSION_INPUTS_INVALID',
+        )
+            .having(
+          (exception) => exception.details['missingInputs'],
+          'details',
+          ['selfie_primary'],
+        ).having(
+          (exception) => exception.details,
+          'safe details',
+          isNot(contains('requestId')),
+        ),
       ),
     );
   });

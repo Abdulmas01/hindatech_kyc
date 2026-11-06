@@ -17,3 +17,4 @@
 - Add advisory quality signals, host-controlled guidance, and auto-capture.
 - Add explicit lifecycle management for sensitive local capture files.
 - Align session bootstrap and endpoints with the NestJS SDK contract.
+- Add hosted multipart upload, typed asset receipts, and stable SDK error codes.

@@ -52,7 +52,11 @@ Launch the public capture view from a page or route:
 ```dart
 Future<void> handleDocumentCapture(DocumentCaptureResult result) async {
   try {
-    await uploadNormalizedDocument(result.normalizedPath);
+    final hostedAsset = await client.uploadHostedAsset(
+      inputType: CaptureAssetType.documentFront.wireValue,
+      filePath: result.normalizedPath,
+    );
+    selectedAssetKeys[hostedAsset.inputTypeValue] = hostedAsset.assetKey;
   } finally {
     await result.deleteLocalFiles();
   }
@@ -67,6 +71,11 @@ DocumentCaptureView(
   },
 )
 ```
+
+Choose the asset slot from `client.session.requiredInputs`. Keep the returned
+`assetKey` for submission. Uploading the same input type again creates another
+temporary asset. If an upload times out after the request may have reached the
+server, recover the session before retrying.
 
 The capture view deletes files discarded with Retake or abandoned before the
 Continue action. After Continue invokes `onCompleted`, ownership transfers to
@@ -103,6 +112,7 @@ DocumentCaptureView(
 - Centralized, session-authorized API transport and endpoint definitions
 - NestJS-provided required asset and payload inputs
 - NestJS upload, polling, and re-bootstrap policies
+- Workflow-aware NestJS hosted asset upload and typed asset receipts
 - Document-capture configuration and result models
 - Adaptive document-frame processing
 - Host-controlled advisory quality guidance and auto-capture
@@ -116,4 +126,4 @@ DocumentCaptureView(
 - Runnable Android and iOS integration example
 
 The package does not currently bundle a production-approved quality model.
-Upload orchestration and polling will be added incrementally.
+Session recovery, asset submission, and polling will be added incrementally.

@@ -19,12 +19,22 @@ class ApiException implements Exception {
     required this.failure,
     required this.message,
     this.statusCode,
+    this.code,
+    this.details = const {},
     this.cause,
   });
 
   final ApiFailure failure;
   final String message;
   final int? statusCode;
+
+  /// Stable NestJS error code for programmatic handling, when supplied.
+  final String? code;
+
+  /// Non-standard error envelope fields such as submission input details.
+  ///
+  /// Authentication tokens and raw response bodies are never included.
+  final Map<String, Object?> details;
   final Object? cause;
 
   bool get isRetryable =>
