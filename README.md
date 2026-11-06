@@ -132,6 +132,24 @@ final cancelledState = await client.cancelSession();
 After cancellation succeeds, stop capture and discard local pending upload
 state. Retrying cancellation safely returns the same cancelled state.
 
+Record the exact notice presented before input upload:
+
+```dart
+final evidence = await client.recordConsentEvidence(
+  VerificationConsentRequest(
+    purposeCode: 'verification_processing',
+    noticeId: 'kyc_notice',
+    noticeVersion: '2026-01',
+    noticeSha256: sha256OfExactPresentedNotice,
+  ),
+);
+
+final retainedEvidence = await client.listConsentEvidence();
+```
+
+The digest must be SHA-256 over the exact notice presented. Consent evidence is
+a client assertion; it does not establish identity or legal sufficiency.
+
 The capture view deletes files discarded with Retake or abandoned before the
 Continue action. After Continue invokes `onCompleted`, ownership transfers to
 the host application. Delete both local images with `result.deleteLocalFiles()`
@@ -173,6 +191,7 @@ DocumentCaptureView(
 - Workflow-declared structured payload attachment
 - Cancellable, sequential verification status polling
 - Idempotent pre-processing session cancellation
+- Validated consent evidence recording and retrieval
 - Document-capture configuration and result models
 - Adaptive document-frame processing
 - Host-controlled advisory quality guidance and auto-capture

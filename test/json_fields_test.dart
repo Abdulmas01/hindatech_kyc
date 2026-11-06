@@ -17,6 +17,11 @@ void main() {
     );
     expect(JsonFields.requiredStringList(json, 'values'), ['one', 'two']);
     expect(JsonFields.requiredMap(json, 'nested'), {'enabled': true});
+    expect(
+        JsonFields.requiredList({
+          'items': [1, 2]
+        }, 'items'),
+        [1, 2]);
   });
 
   test('rejects invalid shared contract fields', () {
@@ -36,6 +41,10 @@ void main() {
     );
     expect(
       () => JsonFields.requiredMap({'value': []}, 'value'),
+      throwsFormatException,
+    );
+    expect(
+      () => JsonFields.requiredList({'value': {}}, 'value'),
       throwsFormatException,
     );
   });

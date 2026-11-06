@@ -13,6 +13,7 @@ import '../session/verification_session_policies.dart';
 import '../session/verification_session_state.dart';
 import '../session/verification_payload.dart';
 import '../session/verification_polling.dart';
+import '../session/verification_consent.dart';
 
 /// Loads a verification session from the application's trusted backend.
 ///
@@ -274,6 +275,59 @@ class KycClient {
       response,
       'The verification service returned an invalid cancellation state.',
     );
+  }
+
+  /// Returns consent evidence currently retained for this session.
+  Future<VerificationConsentEvidenceList> listConsentEvidence() async {
+    if (!session.allows(VerificationSessionAction.readConsent)) {
+      throw StateError('This session does not allow consent evidence reads.');
+    }
+    final response = await _apiClient.get(
+      _apiClient.endpoints.sdkVerificationConsent(
+        session.verificationSessionId,
+      ),
+    );
+    try {
+      return VerificationConsentEvidenceList.fromJson(response);
+    } catch (error) {
+      throw _invalidResponse(
+        'The verification service returned invalid consent evidence.',
+        error,
+      );
+    }
+  }
+
+  /// Records the client assertion for one exact consent notice.
+  ///
+  /// NestJS adds the affirmation timestamp and session source type. Recording
+  /// the same notice version and digest can be safely retried.
+  Future<VerificationConsentEvidence> recordConsentEvidence(
+    VerificationConsentRequest request,
+  ) async {
+    if (!session.allows(VerificationSessionAction.recordConsent)) {
+      throw StateError('This session does not allow consent evidence writes.');
+    }
+    final response = await _apiClient.post(
+      _apiClient.endpoints.sdkVerificationConsent(
+        session.verificationSessionId,
+      ),
+      body: request.toJson(),
+    );
+    try {
+      final evidence = VerificationConsentEvidence.fromJson(response);
+      if (evidence.purposeCode != request.purposeCode ||
+          evidence.noticeId != request.noticeId ||
+          evidence.noticeVersion != request.noticeVersion ||
+          evidence.noticeSha256 != request.noticeSha256) {
+        throw const FormatException('Recorded consent evidence is invalid.');
+      }
+      return evidence;
+    } catch (error) {
+      throw _invalidResponse(
+        'The verification service returned invalid consent evidence.',
+        error,
+      );
+    }
   }
 
   /// Submits exact hosted asset keys selected for the workflow input slots.

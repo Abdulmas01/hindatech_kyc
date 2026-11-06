@@ -37,4 +37,13 @@ abstract final class JsonFields {
     if (raw is! Map) throw FormatException('$key is missing or invalid.');
     return Map<String, Object?>.from(raw);
   }
+
+  static List<Object?> requiredList(
+    Map<String, Object?> json,
+    String key,
+  ) {
+    final raw = json[key];
+    if (raw is! List) throw FormatException('$key must be a list.');
+    return List<Object?>.from(raw);
+  }
 }

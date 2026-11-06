@@ -56,10 +56,7 @@ class VerificationSessionState {
   factory VerificationSessionState.fromJson(Map<String, Object?> json) {
     final verificationSessionId =
         JsonFields.requiredString(json, 'verificationSessionId');
-    final rawAssets = json['hostedAssets'];
-    if (rawAssets is! List) {
-      throw const FormatException('hostedAssets must be a list.');
-    }
+    final rawAssets = JsonFields.requiredList(json, 'hostedAssets');
     final hostedAssets = rawAssets.map((value) {
       if (value is! Map) {
         throw const FormatException('hostedAssets contains an invalid value.');
