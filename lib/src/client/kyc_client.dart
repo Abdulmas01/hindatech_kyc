@@ -6,8 +6,8 @@ import '../session/verification_session.dart';
 /// Loads a verification session from the application's trusted backend.
 ///
 /// The application owns this request because its endpoint and user
-/// authentication are customer-specific. The returned map must contain the
-/// short-lived SDK token and capture manifest issued for one verification.
+/// authentication are customer-specific. The returned map must be the NestJS
+/// SDK bootstrap response for one verification session.
 typedef VerificationSessionProvider = Future<Map<String, Object?>> Function();
 
 /// Holds the validated configuration and session used by an SDK workflow.
@@ -64,12 +64,6 @@ class KycClient {
   }
 
   static void _ensureSessionIsActive(VerificationSession session) {
-    if (session.expiresAt == null) {
-      throw const SessionBootstrapException(
-        failure: SessionBootstrapFailure.invalidResponse,
-        message: 'The verification session expiry is missing or invalid.',
-      );
-    }
     if (session.isExpired) {
       throw const SessionBootstrapException(
         failure: SessionBootstrapFailure.expiredSession,

@@ -8,31 +8,59 @@ void main() {
 
   test('builds centralized verification endpoints', () {
     expect(
-      endpoints.verifications,
-      Uri.parse('https://api.example.com/api/v1/verifications'),
-    );
-    expect(
-      endpoints.verification('verification-id'),
-      Uri.parse('https://api.example.com/api/v1/verifications/verification-id'),
-    );
-    expect(
-      endpoints.verificationAssets('verification-id'),
+      endpoints.sdkVerificationBootstrap,
       Uri.parse(
-        'https://api.example.com/api/v1/verifications/verification-id/assets',
+        'https://api.example.com/api/v1/sdk/verification-sessions/bootstrap',
       ),
     );
     expect(
-      endpoints.verificationSubmit('verification-id'),
+      endpoints.sdkVerificationSession('verification-id'),
       Uri.parse(
-        'https://api.example.com/api/v1/verifications/verification-id/submit',
+        'https://api.example.com/api/v1/sdk/verification-sessions/verification-id',
+      ),
+    );
+    expect(
+      endpoints.sdkVerificationPayloads('verification-id'),
+      Uri.parse(
+        'https://api.example.com/api/v1/sdk/verification-sessions/verification-id/payloads',
+      ),
+    );
+    expect(
+      endpoints.sdkHostedAssets('verification-id'),
+      Uri.parse(
+        'https://api.example.com/api/v1/sdk/verification-sessions/verification-id/assets/hosted',
+      ),
+    );
+    expect(
+      endpoints.sdkHostedAssetSubmit('verification-id'),
+      Uri.parse(
+        'https://api.example.com/api/v1/sdk/verification-sessions/verification-id/assets/submit',
+      ),
+    );
+    expect(
+      endpoints.sdkExternalAssetSubmit('verification-id'),
+      Uri.parse(
+        'https://api.example.com/api/v1/sdk/verification-sessions/verification-id/assets/external-reference/submit',
+      ),
+    );
+    expect(
+      endpoints.sdkVerificationCancel('verification-id'),
+      Uri.parse(
+        'https://api.example.com/api/v1/sdk/verification-sessions/verification-id/cancel',
+      ),
+    );
+    expect(
+      endpoints.sdkVerificationConsent('verification-id'),
+      Uri.parse(
+        'https://api.example.com/api/v1/sdk/verification-sessions/verification-id/consent',
       ),
     );
   });
 
   test('encodes verification ids as path segments', () {
     expect(
-      endpoints.verification('id with spaces').toString(),
-      'https://api.example.com/api/v1/verifications/id%20with%20spaces',
+      endpoints.sdkVerificationSession('id with spaces').toString(),
+      'https://api.example.com/api/v1/sdk/verification-sessions/id%20with%20spaces',
     );
   });
 

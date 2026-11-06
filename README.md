@@ -34,14 +34,15 @@ final client = await KycClient.bootstrap(
   ),
   sessionProvider: () async {
     final response = await customerApi.createVerification();
+    // Return the NestJS SDK bootstrap response unchanged.
     return response.json;
   },
 );
 ```
 
 Never place a permanent customer API credential in the Flutter application.
-The backend must issue a token scoped to `client.session.verificationId` with a
-short expiry.
+The backend must return the NestJS SDK bootstrap contract. Its token must be
+scoped to `client.session.verificationSessionId` with a short expiry.
 
 Call `client.close()` when the verification flow is permanently finished so
 the SDK can release its network resources.
@@ -100,7 +101,8 @@ DocumentCaptureView(
 - SDK configuration
 - Validated short-lived session bootstrap
 - Centralized, session-authorized API transport and endpoint definitions
-- Server-provided capture manifest
+- NestJS-provided required asset and payload inputs
+- NestJS upload, polling, and re-bootstrap policies
 - Document-capture configuration and result models
 - Adaptive document-frame processing
 - Host-controlled advisory quality guidance and auto-capture

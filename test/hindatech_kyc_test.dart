@@ -1,61 +1,46 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hindatech_kyc/hindatech_kyc.dart';
 
+import 'fixtures/sdk_bootstrap_payload.dart';
+
 void main() {
   group('VerificationSession', () {
     test('parses a server-defined document workflow', () {
-      final session = VerificationSession.fromJson({
-        'id': 'verification-id',
-        'sdk_token': 'short-lived-token',
-        'workflow_key': 'document_extract',
-        'expires_at': '2026-10-25T20:00:00Z',
-        'capture_manifest': {
-          'version': 1,
-          'required_assets': [
-            {
-              'type': 'document_front',
-              'capture': 'document',
-            },
-          ],
-        },
-      });
+      final session = VerificationSession.fromJson(sdkBootstrapPayload());
 
-      expect(session.verificationId, 'verification-id');
+      expect(session.verificationSessionId, 'verification-id');
       expect(session.workflowKey, 'document_extract');
-      expect(session.captureManifest.workflowKey, 'document_extract');
-      expect(session.captureManifest.requiredAssets, hasLength(1));
+      expect(session.status, VerificationSessionStatus.started);
+      expect(session.assetIngestionMode, AssetIngestionMode.smartKycHosted);
+      expect(session.requiredInputs.assetRequirements, hasLength(2));
       expect(
-        session.captureManifest.requiredAssets.single.assetType,
+        session.requiredInputs.assetRequirements.first.assetType,
         CaptureAssetType.documentFront,
       );
-      expect(
-        session.captureManifest.requiredAssets.single.captureMethod,
-        CaptureMethod.document,
-      );
+      expect(session.allows(VerificationSessionAction.uploadAsset), isTrue);
+      expect(session.uploadPolicy.maxFileSizeBytes, 10485760);
+      expect(session.polling.recommendedInterval, const Duration(seconds: 3));
     });
 
-    test('preserves unknown asset values for forward compatibility', () {
-      final manifest = CaptureManifest.fromJson({
-        'required_assets': [
-          {
-            'type': 'future_identity_signal',
-            'capture': 'future_capture_method',
-          },
-        ],
-      });
+    test('preserves unknown input values for forward compatibility', () {
+      final payload = sdkBootstrapPayload(
+        requiredAssetTypes: const ['future_identity_signal'],
+        optionalAssetTypes: const [],
+      );
+      final requiredInputs =
+          VerificationSession.fromJson(payload).requiredInputs;
 
-      final requirement = manifest.requiredAssets.single;
+      final requirement = requiredInputs.assetRequirements.single;
       expect(requirement.assetType, CaptureAssetType.unknown);
-      expect(requirement.captureMethod, CaptureMethod.unknown);
       expect(requirement.assetTypeValue, 'future_identity_signal');
-      expect(requirement.captureMethodValue, 'future_capture_method');
+      expect(requiredInputs.allowsAssetType('future_identity_signal'), isTrue);
     });
 
     test('rejects a bootstrap response without a scoped SDK token', () {
       expect(
         () => VerificationSession.fromJson({
-          'id': 'verification-id',
-          'capture_manifest': {'required_assets': <Object?>[]},
+          ...sdkBootstrapPayload(),
+          'sdkToken': '',
         }),
         throwsFormatException,
       );

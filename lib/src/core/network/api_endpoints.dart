@@ -8,16 +8,52 @@ class ApiEndpoints {
 
   final Uri _baseUri;
 
-  Uri get verifications => _resolve(const ['verifications']);
+  Uri get sdkVerificationBootstrap =>
+      _resolve(const ['sdk', 'verification-sessions', 'bootstrap']);
 
-  Uri verification(String verificationId) =>
-      _resolve(['verifications', _requireId(verificationId)]);
+  Uri sdkVerificationSession(String verificationSessionId) => _resolve([
+        'sdk',
+        'verification-sessions',
+        _requireId(verificationSessionId),
+      ]);
 
-  Uri verificationAssets(String verificationId) =>
-      _resolve(['verifications', _requireId(verificationId), 'assets']);
+  Uri sdkVerificationPayloads(String verificationSessionId) => _sdkSessionPath(
+        verificationSessionId,
+        const ['payloads'],
+      );
 
-  Uri verificationSubmit(String verificationId) =>
-      _resolve(['verifications', _requireId(verificationId), 'submit']);
+  Uri sdkHostedAssets(String verificationSessionId) => _sdkSessionPath(
+        verificationSessionId,
+        const ['assets', 'hosted'],
+      );
+
+  Uri sdkHostedAssetSubmit(String verificationSessionId) => _sdkSessionPath(
+        verificationSessionId,
+        const ['assets', 'submit'],
+      );
+
+  Uri sdkExternalAssetSubmit(String verificationSessionId) => _sdkSessionPath(
+        verificationSessionId,
+        const ['assets', 'external-reference', 'submit'],
+      );
+
+  Uri sdkVerificationCancel(String verificationSessionId) => _sdkSessionPath(
+        verificationSessionId,
+        const ['cancel'],
+      );
+
+  Uri sdkVerificationConsent(String verificationSessionId) => _sdkSessionPath(
+        verificationSessionId,
+        const ['consent'],
+      );
+
+  Uri _sdkSessionPath(String verificationSessionId, List<String> suffix) =>
+      _resolve([
+        'sdk',
+        'verification-sessions',
+        _requireId(verificationSessionId),
+        ...suffix,
+      ]);
 
   Uri _resolve(List<String> segments) => _baseUri.replace(
         pathSegments: [..._baseUri.pathSegments, ...segments],
@@ -46,7 +82,11 @@ class ApiEndpoints {
   static String _requireId(String value) {
     final id = value.trim();
     if (id.isEmpty) {
-      throw ArgumentError.value(value, 'verificationId', 'Must not be empty.');
+      throw ArgumentError.value(
+        value,
+        'verificationSessionId',
+        'Must not be empty.',
+      );
     }
     return id;
   }

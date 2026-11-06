@@ -1,61 +1,149 @@
-import 'capture_manifest.dart';
+import 'verification_required_inputs.dart';
+import 'verification_session_policies.dart';
 
-/// A short-lived authorization and capture plan for one verification.
-///
-/// Applications obtain this payload from their backend. The contained token
-/// must be scoped to this verification and must not be replaced with a
-/// long-lived customer API credential.
+enum VerificationSessionStatus {
+  started('started'),
+  uploaded('uploaded'),
+  processing('processing'),
+  completed('completed'),
+  failed('failed'),
+  manualReview('manual_review'),
+  expired('expired'),
+  cancelled('cancelled'),
+  unknown('unknown');
+
+  const VerificationSessionStatus(this.wireValue);
+
+  final String wireValue;
+
+  static VerificationSessionStatus fromWireValue(String value) {
+    for (final status in values) {
+      if (status != unknown && status.wireValue == value) return status;
+    }
+    return unknown;
+  }
+}
+
+enum VerificationSessionAction {
+  readSession('session:read'),
+  uploadAsset('asset:upload'),
+  writePayload('payload:write'),
+  submitSession('session:submit'),
+  cancelSession('session:cancel'),
+  readConsent('consent:read'),
+  recordConsent('consent:record');
+
+  const VerificationSessionAction(this.wireValue);
+
+  final String wireValue;
+}
+
+/// A NestJS-issued authorization and workflow contract for one verification.
 class VerificationSession {
-  const VerificationSession({
-    required this.verificationId,
+  VerificationSession({
+    required this.verificationSessionId,
     required this.sdkToken,
-    required this.captureManifest,
-    this.workflowKey,
-    this.expiresAt,
-  });
+    required this.sdkTokenExpiresAt,
+    required this.sessionExpiresAt,
+    required List<String> allowedActions,
+    required this.sessionModeValue,
+    required this.assetIngestionModeValue,
+    required List<String> supportedAssetIngestionModeValues,
+    required this.workflowKey,
+    required this.statusValue,
+    required this.requiredInputs,
+    required this.uploadPolicy,
+    required this.polling,
+    required this.rebootstrap,
+  })  : allowedActions = List.unmodifiable(allowedActions),
+        supportedAssetIngestionModeValues =
+            List.unmodifiable(supportedAssetIngestionModeValues);
 
-  final String verificationId;
+  final String verificationSessionId;
   final String sdkToken;
-  final String? workflowKey;
-  final DateTime? expiresAt;
-  final CaptureManifest captureManifest;
+  final DateTime sdkTokenExpiresAt;
+  final DateTime sessionExpiresAt;
+  final List<String> allowedActions;
+  final String sessionModeValue;
+  final String assetIngestionModeValue;
+  final List<String> supportedAssetIngestionModeValues;
+  final String workflowKey;
+  final String statusValue;
+  final VerificationRequiredInputs requiredInputs;
+  final VerificationUploadPolicy uploadPolicy;
+  final VerificationPollingPolicy polling;
+  final VerificationRebootstrapPolicy rebootstrap;
 
-  bool get isExpired =>
-      expiresAt != null && !expiresAt!.isAfter(DateTime.now().toUtc());
+  VerificationSessionStatus get status =>
+      VerificationSessionStatus.fromWireValue(statusValue);
+
+  AssetIngestionMode get assetIngestionMode =>
+      AssetIngestionMode.fromWireValue(assetIngestionModeValue);
+
+  bool allows(VerificationSessionAction action) =>
+      allowedActions.contains(action.wireValue);
+
+  bool get isExpired {
+    final now = DateTime.now().toUtc();
+    return !sdkTokenExpiresAt.isAfter(now) || !sessionExpiresAt.isAfter(now);
+  }
 
   factory VerificationSession.fromJson(Map<String, Object?> json) {
-    final verificationId = json['id']?.toString().trim() ?? '';
-    final sdkToken = json['sdk_token']?.toString().trim() ?? '';
-    final rawManifest = json['capture_manifest'];
-
-    if (verificationId.isEmpty) {
-      throw const FormatException('Verification id is missing.');
-    }
-    if (sdkToken.isEmpty) {
-      throw const FormatException('SDK token is missing.');
-    }
-    if (rawManifest is! Map) {
-      throw const FormatException('Capture manifest is missing.');
-    }
-
-    final workflowKey = _optionalString(json['workflow_key']);
-    final manifestJson = Map<String, Object?>.from(rawManifest);
-    if (workflowKey != null && manifestJson['workflow_key'] == null) {
-      manifestJson['workflow_key'] = workflowKey;
-    }
-
     return VerificationSession(
-      verificationId: verificationId,
-      sdkToken: sdkToken,
-      workflowKey: workflowKey,
-      expiresAt:
-          DateTime.tryParse(json['expires_at']?.toString() ?? '')?.toUtc(),
-      captureManifest: CaptureManifest.fromJson(manifestJson),
+      verificationSessionId: _requiredString(json, 'verificationSessionId'),
+      sdkToken: _requiredString(json, 'sdkToken'),
+      sdkTokenExpiresAt: _requiredDateTime(json, 'sdkTokenExpiresAt'),
+      sessionExpiresAt: _requiredDateTime(json, 'sessionExpiresAt'),
+      allowedActions: _requiredStringList(json, 'allowedActions'),
+      sessionModeValue: _requiredString(json, 'sessionMode'),
+      assetIngestionModeValue: _requiredString(json, 'assetIngestionMode'),
+      supportedAssetIngestionModeValues:
+          _requiredStringList(json, 'supportedAssetIngestionModes'),
+      workflowKey: _requiredString(json, 'workflowKey'),
+      statusValue: _requiredString(json, 'status'),
+      requiredInputs: VerificationRequiredInputs.fromJson(
+        _requiredMap(json, 'requiredInputs'),
+      ),
+      uploadPolicy: VerificationUploadPolicy.fromJson(
+        _requiredMap(json, 'uploadPolicy'),
+      ),
+      polling: VerificationPollingPolicy.fromJson(
+        _requiredMap(json, 'polling'),
+      ),
+      rebootstrap: VerificationRebootstrapPolicy.fromJson(
+        _requiredMap(json, 'rebootstrap'),
+      ),
     );
   }
+}
 
-  static String? _optionalString(Object? value) {
-    final parsed = value?.toString().trim();
-    return parsed == null || parsed.isEmpty ? null : parsed;
-  }
+String _requiredString(Map<String, Object?> json, String key) {
+  final value = json[key];
+  final parsed = value is String ? value.trim() : '';
+  if (parsed.isEmpty) throw FormatException('$key is missing or invalid.');
+  return parsed;
+}
+
+DateTime _requiredDateTime(Map<String, Object?> json, String key) {
+  final parsed = DateTime.tryParse(json[key]?.toString() ?? '')?.toUtc();
+  if (parsed == null) throw FormatException('$key is missing or invalid.');
+  return parsed;
+}
+
+List<String> _requiredStringList(Map<String, Object?> json, String key) {
+  final raw = json[key];
+  if (raw is! List) throw FormatException('$key must be a list.');
+  return raw.map((value) {
+    final parsed = value is String ? value.trim() : '';
+    if (parsed.isEmpty) {
+      throw FormatException('$key contains an invalid value.');
+    }
+    return parsed;
+  }).toList(growable: false);
+}
+
+Map<String, Object?> _requiredMap(Map<String, Object?> json, String key) {
+  final raw = json[key];
+  if (raw is! Map) throw FormatException('$key is missing or invalid.');
+  return Map<String, Object?>.from(raw);
 }

@@ -6,6 +6,8 @@ import 'package:hindatech_kyc/src/core/network/session_api_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
+import 'fixtures/sdk_bootstrap_payload.dart';
+
 void main() {
   final config = KycConfig(
     apiBaseUri: Uri.parse('https://api.example.com/api/v1/'),
@@ -28,7 +30,7 @@ void main() {
     addTearDown(transport.close);
 
     final response = await transport.get(
-      transport.endpoints.verification('verification-id'),
+      transport.endpoints.sdkVerificationSession('verification-id'),
     );
 
     expect(sentRequest.method, 'GET');
@@ -50,7 +52,7 @@ void main() {
     addTearDown(transport.close);
 
     final response = await transport.post(
-      transport.endpoints.verificationSubmit('verification-id'),
+      transport.endpoints.sdkHostedAssetSubmit('verification-id'),
       body: {'confirm': true},
     );
 
@@ -68,7 +70,9 @@ void main() {
     addTearDown(transport.close);
 
     await expectLater(
-      transport.get(transport.endpoints.verification('verification-id')),
+      transport.get(
+        transport.endpoints.sdkVerificationSession('verification-id'),
+      ),
       throwsA(
         isA<ApiException>()
             .having(
@@ -98,7 +102,9 @@ void main() {
     addTearDown(transport.close);
 
     await expectLater(
-      transport.get(transport.endpoints.verification('verification-id')),
+      transport.get(
+        transport.endpoints.sdkVerificationSession('verification-id'),
+      ),
       throwsA(
         isA<ApiException>().having(
           (exception) => exception.failure,
@@ -113,7 +119,7 @@ void main() {
     var requestCount = 0;
     final transport = SessionApiClient(
       config: config,
-      session: _session(expiresAt: '2020-01-01T00:00:00Z'),
+      session: _session(sdkTokenExpiresAt: '2020-01-01T00:00:00Z'),
       httpClient: MockClient((_) async {
         requestCount++;
         return http.Response('{}', 200);
@@ -122,7 +128,9 @@ void main() {
     addTearDown(transport.close);
 
     await expectLater(
-      transport.get(transport.endpoints.verification('verification-id')),
+      transport.get(
+        transport.endpoints.sdkVerificationSession('verification-id'),
+      ),
       throwsA(
         isA<ApiException>().having(
           (exception) => exception.failure,
@@ -135,10 +143,9 @@ void main() {
   });
 }
 
-VerificationSession _session({String expiresAt = '2099-01-01T00:00:00Z'}) =>
-    VerificationSession.fromJson({
-      'id': 'verification-id',
-      'sdk_token': 'short-lived-token',
-      'expires_at': expiresAt,
-      'capture_manifest': {'required_assets': <Object?>[]},
-    });
+VerificationSession _session({
+  String sdkTokenExpiresAt = '2099-01-01T00:00:00Z',
+}) =>
+    VerificationSession.fromJson(
+      sdkBootstrapPayload(sdkTokenExpiresAt: sdkTokenExpiresAt),
+    );

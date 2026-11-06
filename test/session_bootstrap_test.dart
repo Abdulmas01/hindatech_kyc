@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hindatech_kyc/hindatech_kyc.dart';
 
+import 'fixtures/sdk_bootstrap_payload.dart';
+
 void main() {
   final config = KycConfig(apiBaseUri: Uri.parse('https://api.example.com'));
 
@@ -9,15 +11,15 @@ void main() {
         () async {
       final client = await KycClient.bootstrap(
         config: config,
-        sessionProvider: () async => _sessionPayload(
-          expiresAt: '2099-01-01T00:00:00Z',
-        ),
+        sessionProvider: () async => sdkBootstrapPayload(),
       );
 
       expect(client.config, same(config));
-      expect(client.session.verificationId, 'verification-id');
+      expect(client.session.verificationSessionId, 'verification-id');
       expect(client.session.sdkToken, 'short-lived-token');
-      expect(client.session.captureManifest.requiredAssets, hasLength(1));
+      expect(client.session.requiredInputs.requiredAssetTypes, [
+        'document_front',
+      ]);
     });
 
     test('reports customer backend failures without exposing credentials',
@@ -51,8 +53,7 @@ void main() {
         KycClient.bootstrap(
           config: config,
           sessionProvider: () async => {
-            'id': 'verification-id',
-            'capture_manifest': {'required_assets': <Object?>[]},
+            'verificationSessionId': 'verification-id',
           },
         ),
         throwsA(
@@ -66,7 +67,7 @@ void main() {
     });
 
     test('requires a valid session expiry', () async {
-      final payload = _sessionPayload(expiresAt: 'not-a-date');
+      final payload = sdkBootstrapPayload(sdkTokenExpiresAt: 'not-a-date');
 
       await expectLater(
         KycClient.bootstrap(
@@ -87,8 +88,8 @@ void main() {
       await expectLater(
         KycClient.bootstrap(
           config: config,
-          sessionProvider: () async => _sessionPayload(
-            expiresAt: '2020-01-01T00:00:00Z',
+          sessionProvider: () async => sdkBootstrapPayload(
+            sdkTokenExpiresAt: '2020-01-01T00:00:00Z',
           ),
         ),
         throwsA(
@@ -102,18 +103,3 @@ void main() {
     });
   });
 }
-
-Map<String, Object?> _sessionPayload({required String expiresAt}) => {
-      'id': 'verification-id',
-      'sdk_token': 'short-lived-token',
-      'expires_at': expiresAt,
-      'capture_manifest': {
-        'version': 1,
-        'required_assets': [
-          {
-            'type': 'document_front',
-            'capture': 'document',
-          },
-        ],
-      },
-    };
