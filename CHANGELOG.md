@@ -24,3 +24,4 @@
 - Add cancellable, sequential session polling with host-controlled limits.
 - Add idempotent SDK session cancellation using the shared state contract.
 - Add validated SDK consent evidence recording and retrieval.
+- Add customer-managed external asset reference submission.

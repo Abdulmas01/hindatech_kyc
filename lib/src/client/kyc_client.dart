@@ -7,6 +7,7 @@ import '../core/network/multipart_file_request.dart';
 import '../core/network/session_api_client.dart';
 import '../session/hosted_asset.dart';
 import '../session/hosted_asset_submission.dart';
+import '../session/external_asset_submission.dart';
 import '../session/session_bootstrap_exception.dart';
 import '../session/verification_session.dart';
 import '../session/verification_session_policies.dart';
@@ -348,6 +349,44 @@ class KycClient {
       ),
       body: request.toJson(),
     );
+    return _parseSubmission(
+      response,
+      'The verification service returned an invalid submission.',
+    );
+  }
+
+  /// Submits temporary customer-managed HTTPS references for server fetching.
+  ///
+  /// Reference creation and storage credentials remain the responsibility of
+  /// the customer backend. Signed URLs must not be logged or persisted.
+  Future<VerificationSubmission> submitExternalAssets(
+    ExternalAssetSubmissionRequest request,
+  ) async {
+    if (!session.allows(VerificationSessionAction.submitSession)) {
+      throw StateError('This session does not allow submission.');
+    }
+    if (!session.supportedAssetIngestionModeValues
+        .contains(AssetIngestionMode.externalReference.wireValue)) {
+      throw StateError('This session does not allow external references.');
+    }
+    _validateExternalAssetSelection(request.assets);
+
+    final response = await _apiClient.post(
+      _apiClient.endpoints.sdkExternalAssetSubmit(
+        session.verificationSessionId,
+      ),
+      body: request.toJson(),
+    );
+    return _parseSubmission(
+      response,
+      'The verification service returned an invalid external submission.',
+    );
+  }
+
+  VerificationSubmission _parseSubmission(
+    Map<String, Object?> response,
+    String invalidResponseMessage,
+  ) {
     try {
       final submission = VerificationSubmission.fromJson(response);
       if (submission.verificationSessionId != session.verificationSessionId) {
@@ -355,10 +394,7 @@ class KycClient {
       }
       return submission;
     } catch (error) {
-      throw _invalidResponse(
-        'The verification service returned an invalid submission.',
-        error,
-      );
+      throw _invalidResponse(invalidResponseMessage, error);
     }
   }
 
@@ -388,6 +424,27 @@ class KycClient {
         'assets',
         'Missing required workflow asset selections.',
       );
+    }
+  }
+
+  void _validateExternalAssetSelection(
+    Map<String, ExternalAssetReference> assets,
+  ) {
+    if (assets.isEmpty) {
+      throw ArgumentError('assets must contain workflow asset references.');
+    }
+    for (final entry in assets.entries) {
+      if (!session.requiredInputs.allowsAssetType(entry.key)) {
+        throw ArgumentError('assets contains an undeclared input type.');
+      }
+      if (entry.value.isExpired) {
+        throw ArgumentError('assets contains an expired reference.');
+      }
+    }
+    final missingRequired = session.requiredInputs.requiredAssetTypes
+        .where((inputType) => !assets.containsKey(inputType));
+    if (missingRequired.isNotEmpty) {
+      throw ArgumentError('assets is missing required workflow references.');
     }
   }
 

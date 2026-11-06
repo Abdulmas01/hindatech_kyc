@@ -1,6 +1,7 @@
 library;
 
 export 'src/client/kyc_client.dart';
+export 'src/config/kyc_config.dart';
 export 'src/core/network/api_exception.dart';
 export 'src/features/document_capture/domain/models/document_capture_config.dart';
 export 'src/features/document_capture/domain/models/document_capture_result.dart';
@@ -8,16 +9,16 @@ export 'src/features/document_capture/domain/models/document_quality_assessment.
 export 'src/features/document_capture/presentation/widgets/document_capture_overlay.dart';
 export 'src/features/document_capture/presentation/widgets/document_capture_view.dart';
 export 'src/features/document_capture/presentation/widgets/document_quality_guidance_banner.dart';
-export 'src/config/kyc_config.dart';
 export 'src/presentation/document_capture_strings.dart';
 export 'src/presentation/document_capture_theme.dart';
-export 'src/session/verification_required_inputs.dart';
-export 'src/session/verification_payload.dart';
-export 'src/session/verification_polling.dart';
-export 'src/session/verification_consent.dart';
+export 'src/session/external_asset_submission.dart';
 export 'src/session/hosted_asset.dart';
 export 'src/session/hosted_asset_submission.dart';
 export 'src/session/session_bootstrap_exception.dart';
+export 'src/session/verification_consent.dart';
+export 'src/session/verification_payload.dart';
+export 'src/session/verification_polling.dart';
+export 'src/session/verification_required_inputs.dart';
 export 'src/session/verification_session.dart';
 export 'src/session/verification_session_policies.dart';
 export 'src/session/verification_session_state.dart';

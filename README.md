@@ -150,6 +150,29 @@ final retainedEvidence = await client.listConsentEvidence();
 The digest must be SHA-256 over the exact notice presented. Consent evidence is
 a client assertion; it does not establish identity or legal sufficiency.
 
+Customers using their own asset storage can submit short-lived HTTPS
+references instead of uploading files through the SDK:
+
+```dart
+final submission = await client.submitExternalAssets(
+  ExternalAssetSubmissionRequest(
+    assets: {
+      CaptureAssetType.documentFront.wireValue: ExternalAssetReference(
+        referenceUri: temporaryReferenceFromCustomerBackend,
+        referenceId: 'customer-document-front-2026-08-02',
+        storageProvider: 'customer-s3',
+        contentType: 'image/jpeg',
+        expiresAt: referenceExpiry,
+      ),
+    },
+  ),
+);
+```
+
+The customer backend owns URL signing and storage credentials. The SDK only
+validates and submits the temporary reference to NestJS; it never receives
+permanent storage credentials. Signed URLs must not be logged or persisted.
+
 The capture view deletes files discarded with Retake or abandoned before the
 Continue action. After Continue invokes `onCompleted`, ownership transfers to
 the host application. Delete both local images with `result.deleteLocalFiles()`
@@ -192,6 +215,7 @@ DocumentCaptureView(
 - Cancellable, sequential verification status polling
 - Idempotent pre-processing session cancellation
 - Validated consent evidence recording and retrieval
+- Customer-managed external asset reference submission
 - Document-capture configuration and result models
 - Adaptive document-frame processing
 - Host-controlled advisory quality guidance and auto-capture
