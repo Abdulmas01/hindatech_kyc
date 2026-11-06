@@ -13,6 +13,7 @@ export 'src/presentation/document_capture_strings.dart';
 export 'src/presentation/document_capture_theme.dart';
 export 'src/session/verification_required_inputs.dart';
 export 'src/session/verification_payload.dart';
+export 'src/session/verification_polling.dart';
 export 'src/session/hosted_asset.dart';
 export 'src/session/hosted_asset_submission.dart';
 export 'src/session/session_bootstrap_exception.dart';

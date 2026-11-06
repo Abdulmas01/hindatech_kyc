@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import '../config/kyc_config.dart';
+import '../core/async/polling_runner.dart';
 import '../core/network/api_exception.dart';
 import '../core/network/multipart_file_request.dart';
 import '../core/network/session_api_client.dart';
@@ -11,6 +12,7 @@ import '../session/verification_session.dart';
 import '../session/verification_session_policies.dart';
 import '../session/verification_session_state.dart';
 import '../session/verification_payload.dart';
+import '../session/verification_polling.dart';
 
 /// Loads a verification session from the application's trusted backend.
 ///
@@ -227,6 +229,25 @@ class KycClient {
         error,
       );
     }
+  }
+
+  /// Polls recoverable SDK state until a terminal status is received.
+  ///
+  /// The first request is immediate. Later requests use the backend-provided
+  /// interval unless [options] overrides it. Requests never overlap, and
+  /// cancelling the stream subscription prevents further polling.
+  Stream<VerificationSessionState> pollSession([
+    VerificationPollingOptions options = const VerificationPollingOptions(),
+  ]) {
+    options.validate();
+    return PollingRunner.run(
+      PollingTask(
+        load: recoverSession,
+        shouldContinue: (state) => !state.isTerminal,
+        interval: options.interval ?? session.polling.recommendedInterval,
+        timeout: options.timeout,
+      ),
+    );
   }
 
   /// Submits exact hosted asset keys selected for the workflow input slots.

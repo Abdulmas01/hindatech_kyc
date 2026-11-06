@@ -38,6 +38,17 @@ class VerificationSessionState {
   AssetIngestionMode get assetIngestionMode =>
       AssetIngestionMode.fromWireValue(assetIngestionModeValue);
 
+  /// Whether this state ends SDK polling for the active verification.
+  bool get isTerminal => switch (status) {
+        VerificationSessionStatus.completed ||
+        VerificationSessionStatus.failed ||
+        VerificationSessionStatus.manualReview ||
+        VerificationSessionStatus.expired ||
+        VerificationSessionStatus.cancelled =>
+          true,
+        _ => false,
+      };
+
   /// Returns every recovered candidate for [inputType] without selecting one.
   Iterable<HostedAsset> hostedAssetsFor(String inputType) =>
       hostedAssets.where((asset) => asset.inputTypeValue == inputType);

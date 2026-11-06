@@ -21,3 +21,4 @@
 - Add typed session recovery and exact-key hosted asset submission.
 - Add workflow-declared structured payload attachment.
 - Reuse strict NestJS contract readers across session response models.
+- Add cancellable, sequential session polling with host-controlled limits.

@@ -111,6 +111,18 @@ await client.attachPayload(
 Payload contents can contain sensitive identity context. Do not log them or
 persist them beyond the active verification session.
 
+After submission, poll the SDK state using the backend-recommended interval:
+
+```dart
+await for (final state in client.pollSession()) {
+  updateVerificationStatus(state.status);
+}
+```
+
+The host may provide `VerificationPollingOptions` to override the interval or
+set a timeout. Poll requests are sequential, stop at terminal states, and stop
+when the stream subscription is cancelled.
+
 The capture view deletes files discarded with Retake or abandoned before the
 Continue action. After Continue invokes `onCompleted`, ownership transfers to
 the host application. Delete both local images with `result.deleteLocalFiles()`
@@ -150,6 +162,7 @@ DocumentCaptureView(
 - Session recovery with duplicate staged-asset preservation
 - Exact-key hosted asset submission
 - Workflow-declared structured payload attachment
+- Cancellable, sequential verification status polling
 - Document-capture configuration and result models
 - Adaptive document-frame processing
 - Host-controlled advisory quality guidance and auto-capture
@@ -163,5 +176,4 @@ DocumentCaptureView(
 - Runnable Android and iOS integration example
 
 The package does not currently bundle a production-approved quality model.
-Controlled polling and remaining workflow orchestration will be added
-incrementally.
+Remaining workflow orchestration will be added incrementally.
