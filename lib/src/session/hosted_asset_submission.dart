@@ -1,3 +1,4 @@
+import '../core/serialization/json_fields.dart';
 import 'verification_session.dart';
 
 /// Exact staged asset selections for one hosted submission.
@@ -29,23 +30,10 @@ class VerificationSubmission {
 
   factory VerificationSubmission.fromJson(Map<String, Object?> json) {
     return VerificationSubmission(
-      verificationSessionId: _requiredString(json, 'verificationSessionId'),
-      statusValue: _requiredString(json, 'status'),
-      submittedAt: _requiredDateTime(json, 'submittedAt'),
+      verificationSessionId:
+          JsonFields.requiredString(json, 'verificationSessionId'),
+      statusValue: JsonFields.requiredString(json, 'status'),
+      submittedAt: JsonFields.requiredDateTime(json, 'submittedAt'),
     );
   }
-}
-
-String _requiredString(Map<String, Object?> json, String key) {
-  final value = json[key];
-  final parsed = value is String ? value.trim() : '';
-  if (parsed.isEmpty) throw FormatException('$key is missing or invalid.');
-  return parsed;
-}
-
-DateTime _requiredDateTime(Map<String, Object?> json, String key) {
-  final value = json[key];
-  final parsed = value is String ? DateTime.tryParse(value) : null;
-  if (parsed == null) throw FormatException('$key is missing or invalid.');
-  return parsed.toUtc();
 }

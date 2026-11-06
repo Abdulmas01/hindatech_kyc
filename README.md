@@ -93,6 +93,24 @@ final submission = await client.submitHostedAssets(
 Recovery preserves every staged candidate. Select the intended candidate and
 submit its exact key; the SDK does not silently choose among duplicate uploads.
 
+Attach structured inputs only when declared by the active workflow:
+
+```dart
+await client.attachPayload(
+  VerificationPayloadRequest(
+    payloadType: VerificationPayloadType.referenceProvenance.wireValue,
+    payload: {
+      'source': 'customer_account',
+      'referenceId': 'profile-photo-123',
+    },
+    metadata: {'capturedBy': 'customer_backend'},
+  ),
+);
+```
+
+Payload contents can contain sensitive identity context. Do not log them or
+persist them beyond the active verification session.
+
 The capture view deletes files discarded with Retake or abandoned before the
 Continue action. After Continue invokes `onCompleted`, ownership transfers to
 the host application. Delete both local images with `result.deleteLocalFiles()`
@@ -131,6 +149,7 @@ DocumentCaptureView(
 - Workflow-aware NestJS hosted asset upload and typed asset receipts
 - Session recovery with duplicate staged-asset preservation
 - Exact-key hosted asset submission
+- Workflow-declared structured payload attachment
 - Document-capture configuration and result models
 - Adaptive document-frame processing
 - Host-controlled advisory quality guidance and auto-capture
@@ -144,4 +163,5 @@ DocumentCaptureView(
 - Runnable Android and iOS integration example
 
 The package does not currently bundle a production-approved quality model.
-Polling and remaining workflow orchestration will be added incrementally.
+Controlled polling and remaining workflow orchestration will be added
+incrementally.

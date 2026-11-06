@@ -10,6 +10,7 @@ import '../session/session_bootstrap_exception.dart';
 import '../session/verification_session.dart';
 import '../session/verification_session_policies.dart';
 import '../session/verification_session_state.dart';
+import '../session/verification_payload.dart';
 
 /// Loads a verification session from the application's trusted backend.
 ///
@@ -161,6 +162,42 @@ class KycClient {
     if (path.endsWith('.jpg') || path.endsWith('.jpeg')) return 'image/jpeg';
     if (path.endsWith('.png')) return 'image/png';
     return 'application/octet-stream';
+  }
+
+  /// Attaches one structured payload declared by the active workflow.
+  Future<VerificationPayloadReceipt> attachPayload(
+    VerificationPayloadRequest request,
+  ) async {
+    if (!session.allows(VerificationSessionAction.writePayload)) {
+      throw StateError('This session does not allow payload attachment.');
+    }
+    final payloadType = request.payloadType.trim();
+    if (!session.requiredInputs.allowsPayloadType(payloadType)) {
+      throw ArgumentError.value(
+        request.payloadType,
+        'payloadType',
+        'Must be declared by the verification workflow.',
+      );
+    }
+
+    final response = await _apiClient.post(
+      _apiClient.endpoints.sdkVerificationPayloads(
+        session.verificationSessionId,
+      ),
+      body: request.toJson(),
+    );
+    try {
+      final receipt = VerificationPayloadReceipt.fromJson(response);
+      if (receipt.payloadTypeValue != payloadType) {
+        throw const FormatException('Attached payload type is invalid.');
+      }
+      return receipt;
+    } catch (error) {
+      throw _invalidResponse(
+        'The verification service returned an invalid payload receipt.',
+        error,
+      );
+    }
   }
 
   /// Recovers current SDK state and every unexpired staged hosted asset.

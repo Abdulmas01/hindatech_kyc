@@ -1,3 +1,4 @@
+import '../core/serialization/json_fields.dart';
 import 'verification_required_inputs.dart';
 
 /// Input for staging one workflow-declared asset.
@@ -49,27 +50,14 @@ class HostedAsset {
     }
 
     return HostedAsset(
-      assetKey: _requiredString(json, 'assetKey'),
-      verificationSessionId: _requiredString(json, 'verificationSessionId'),
-      inputTypeValue: _requiredString(json, 'inputType'),
-      contentType: _requiredString(json, 'contentType'),
+      assetKey: JsonFields.requiredString(json, 'assetKey'),
+      verificationSessionId:
+          JsonFields.requiredString(json, 'verificationSessionId'),
+      inputTypeValue: JsonFields.requiredString(json, 'inputType'),
+      contentType: JsonFields.requiredString(json, 'contentType'),
       sizeBytes: sizeBytes,
-      uploadedAt: _requiredDateTime(json, 'uploadedAt'),
-      expiresAt: _requiredDateTime(json, 'expiresAt'),
+      uploadedAt: JsonFields.requiredDateTime(json, 'uploadedAt'),
+      expiresAt: JsonFields.requiredDateTime(json, 'expiresAt'),
     );
   }
-}
-
-String _requiredString(Map<String, Object?> json, String key) {
-  final value = json[key];
-  final parsed = value is String ? value.trim() : '';
-  if (parsed.isEmpty) throw FormatException('$key is missing or invalid.');
-  return parsed;
-}
-
-DateTime _requiredDateTime(Map<String, Object?> json, String key) {
-  final value = json[key];
-  final parsed = value is String ? DateTime.tryParse(value) : null;
-  if (parsed == null) throw FormatException('$key is missing or invalid.');
-  return parsed.toUtc();
 }

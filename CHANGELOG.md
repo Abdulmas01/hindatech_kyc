@@ -19,3 +19,5 @@
 - Align session bootstrap and endpoints with the NestJS SDK contract.
 - Add hosted multipart upload, typed asset receipts, and stable SDK error codes.
 - Add typed session recovery and exact-key hosted asset submission.
+- Add workflow-declared structured payload attachment.
+- Reuse strict NestJS contract readers across session response models.

@@ -1,3 +1,5 @@
+import '../core/serialization/json_fields.dart';
+
 /// A known asset slot declared by a verification workflow.
 enum CaptureAssetType {
   documentFront('document_front'),
@@ -96,24 +98,18 @@ class VerificationRequiredInputs {
 
   factory VerificationRequiredInputs.fromJson(Map<String, Object?> json) {
     return VerificationRequiredInputs(
-      requiredAssetTypes: _stringList(json, 'requiredAssetTypes'),
-      optionalAssetTypes: _stringList(json, 'optionalAssetTypes'),
-      requiredPayloadTypes: _stringList(json, 'requiredPayloadTypes'),
-      optionalPayloadTypes: _stringList(json, 'optionalPayloadTypes'),
-      requiredAllOfFields: _stringList(json, 'requiredAllOfFields'),
-      requiredAnyOfFields: _stringList(json, 'requiredAnyOfFields'),
+      requiredAssetTypes:
+          JsonFields.requiredStringList(json, 'requiredAssetTypes'),
+      optionalAssetTypes:
+          JsonFields.requiredStringList(json, 'optionalAssetTypes'),
+      requiredPayloadTypes:
+          JsonFields.requiredStringList(json, 'requiredPayloadTypes'),
+      optionalPayloadTypes:
+          JsonFields.requiredStringList(json, 'optionalPayloadTypes'),
+      requiredAllOfFields:
+          JsonFields.requiredStringList(json, 'requiredAllOfFields'),
+      requiredAnyOfFields:
+          JsonFields.requiredStringList(json, 'requiredAnyOfFields'),
     );
   }
-}
-
-List<String> _stringList(Map<String, Object?> json, String key) {
-  final raw = json[key];
-  if (raw is! List) throw FormatException('$key must be a list.');
-  return raw.map((value) {
-    final parsed = value is String ? value.trim() : '';
-    if (parsed.isEmpty) {
-      throw FormatException('$key contains an invalid value.');
-    }
-    return parsed;
-  }).toList(growable: false);
 }

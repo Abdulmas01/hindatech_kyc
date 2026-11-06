@@ -1,3 +1,5 @@
+import '../core/serialization/json_fields.dart';
+
 enum AssetIngestionMode {
   smartKycHosted('smartkyc_hosted'),
   externalReference('external_reference'),
@@ -45,12 +47,14 @@ class VerificationUploadPolicy {
       throw const FormatException('Upload redirectsAllowed is invalid.');
     }
     return VerificationUploadPolicy(
-      modeValue: _requiredString(json, 'mode'),
+      modeValue: JsonFields.requiredString(json, 'mode'),
       maxFileSizeBytes: maxFileSizeBytes,
-      acceptedMimeTypes: _requiredStringList(json, 'acceptedMimeTypes'),
+      acceptedMimeTypes:
+          JsonFields.requiredStringList(json, 'acceptedMimeTypes'),
       redirectsAllowed: redirectsAllowed,
-      uploadTransportValue: _requiredString(json, 'uploadTransport'),
-      proxyUploadUrlTemplate: _requiredString(json, 'proxyUploadUrlTemplate'),
+      uploadTransportValue: JsonFields.requiredString(json, 'uploadTransport'),
+      proxyUploadUrlTemplate:
+          JsonFields.requiredString(json, 'proxyUploadUrlTemplate'),
     );
   }
 }
@@ -71,7 +75,7 @@ class VerificationPollingPolicy {
       throw const FormatException('Polling interval is invalid.');
     }
     return VerificationPollingPolicy(
-      statusPath: _requiredString(json, 'statusUrl'),
+      statusPath: JsonFields.requiredString(json, 'statusUrl'),
       recommendedInterval: Duration(milliseconds: intervalMs),
     );
   }
@@ -96,29 +100,10 @@ class VerificationRebootstrapPolicy {
           'Rebootstrap idempotencyRequired is invalid.');
     }
     return VerificationRebootstrapPolicy(
-      createOrResumePath: _requiredString(json, 'createOrResumeUrl'),
+      createOrResumePath: JsonFields.requiredString(json, 'createOrResumeUrl'),
       idempotencyRequired: idempotencyRequired,
       expiredSessionBehaviorValue:
-          _requiredString(json, 'expiredSessionBehavior'),
+          JsonFields.requiredString(json, 'expiredSessionBehavior'),
     );
   }
-}
-
-String _requiredString(Map<String, Object?> json, String key) {
-  final value = json[key];
-  final parsed = value is String ? value.trim() : '';
-  if (parsed.isEmpty) throw FormatException('$key is missing or invalid.');
-  return parsed;
-}
-
-List<String> _requiredStringList(Map<String, Object?> json, String key) {
-  final raw = json[key];
-  if (raw is! List) throw FormatException('$key must be a list.');
-  return raw.map((value) {
-    final parsed = value is String ? value.trim() : '';
-    if (parsed.isEmpty) {
-      throw FormatException('$key contains an invalid value.');
-    }
-    return parsed;
-  }).toList(growable: false);
 }

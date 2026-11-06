@@ -1,3 +1,4 @@
+import '../core/serialization/json_fields.dart';
 import 'hosted_asset.dart';
 import 'verification_required_inputs.dart';
 import 'verification_session.dart';
@@ -43,7 +44,7 @@ class VerificationSessionState {
 
   factory VerificationSessionState.fromJson(Map<String, Object?> json) {
     final verificationSessionId =
-        _requiredString(json, 'verificationSessionId');
+        JsonFields.requiredString(json, 'verificationSessionId');
     final rawAssets = json['hostedAssets'];
     if (rawAssets is! List) {
       throw const FormatException('hostedAssets must be a list.');
@@ -63,36 +64,24 @@ class VerificationSessionState {
 
     return VerificationSessionState(
       verificationSessionId: verificationSessionId,
-      sessionModeValue: _requiredString(json, 'sessionMode'),
-      assetIngestionModeValue: _requiredString(json, 'assetIngestionMode'),
-      workflowKey: _requiredString(json, 'workflowKey'),
-      statusValue: _requiredString(json, 'status'),
+      sessionModeValue: JsonFields.requiredString(json, 'sessionMode'),
+      assetIngestionModeValue:
+          JsonFields.requiredString(json, 'assetIngestionMode'),
+      workflowKey: JsonFields.requiredString(json, 'workflowKey'),
+      statusValue: JsonFields.requiredString(json, 'status'),
       requiredInputs: VerificationRequiredInputs.fromJson(
-        _requiredMap(json, 'requiredInputs'),
+        JsonFields.requiredMap(json, 'requiredInputs'),
       ),
       uploadPolicy: VerificationUploadPolicy.fromJson(
-        _requiredMap(json, 'uploadPolicy'),
+        JsonFields.requiredMap(json, 'uploadPolicy'),
       ),
       polling: VerificationPollingPolicy.fromJson(
-        _requiredMap(json, 'polling'),
+        JsonFields.requiredMap(json, 'polling'),
       ),
       rebootstrap: VerificationRebootstrapPolicy.fromJson(
-        _requiredMap(json, 'rebootstrap'),
+        JsonFields.requiredMap(json, 'rebootstrap'),
       ),
       hostedAssets: hostedAssets,
     );
   }
-}
-
-String _requiredString(Map<String, Object?> json, String key) {
-  final value = json[key];
-  final parsed = value is String ? value.trim() : '';
-  if (parsed.isEmpty) throw FormatException('$key is missing or invalid.');
-  return parsed;
-}
-
-Map<String, Object?> _requiredMap(Map<String, Object?> json, String key) {
-  final value = json[key];
-  if (value is! Map) throw FormatException('$key is missing or invalid.');
-  return Map<String, Object?>.from(value);
 }

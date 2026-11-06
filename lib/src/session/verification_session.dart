@@ -1,3 +1,4 @@
+import '../core/serialization/json_fields.dart';
 import 'verification_required_inputs.dart';
 import 'verification_session_policies.dart';
 
@@ -90,60 +91,31 @@ class VerificationSession {
 
   factory VerificationSession.fromJson(Map<String, Object?> json) {
     return VerificationSession(
-      verificationSessionId: _requiredString(json, 'verificationSessionId'),
-      sdkToken: _requiredString(json, 'sdkToken'),
-      sdkTokenExpiresAt: _requiredDateTime(json, 'sdkTokenExpiresAt'),
-      sessionExpiresAt: _requiredDateTime(json, 'sessionExpiresAt'),
-      allowedActions: _requiredStringList(json, 'allowedActions'),
-      sessionModeValue: _requiredString(json, 'sessionMode'),
-      assetIngestionModeValue: _requiredString(json, 'assetIngestionMode'),
+      verificationSessionId:
+          JsonFields.requiredString(json, 'verificationSessionId'),
+      sdkToken: JsonFields.requiredString(json, 'sdkToken'),
+      sdkTokenExpiresAt: JsonFields.requiredDateTime(json, 'sdkTokenExpiresAt'),
+      sessionExpiresAt: JsonFields.requiredDateTime(json, 'sessionExpiresAt'),
+      allowedActions: JsonFields.requiredStringList(json, 'allowedActions'),
+      sessionModeValue: JsonFields.requiredString(json, 'sessionMode'),
+      assetIngestionModeValue:
+          JsonFields.requiredString(json, 'assetIngestionMode'),
       supportedAssetIngestionModeValues:
-          _requiredStringList(json, 'supportedAssetIngestionModes'),
-      workflowKey: _requiredString(json, 'workflowKey'),
-      statusValue: _requiredString(json, 'status'),
+          JsonFields.requiredStringList(json, 'supportedAssetIngestionModes'),
+      workflowKey: JsonFields.requiredString(json, 'workflowKey'),
+      statusValue: JsonFields.requiredString(json, 'status'),
       requiredInputs: VerificationRequiredInputs.fromJson(
-        _requiredMap(json, 'requiredInputs'),
+        JsonFields.requiredMap(json, 'requiredInputs'),
       ),
       uploadPolicy: VerificationUploadPolicy.fromJson(
-        _requiredMap(json, 'uploadPolicy'),
+        JsonFields.requiredMap(json, 'uploadPolicy'),
       ),
       polling: VerificationPollingPolicy.fromJson(
-        _requiredMap(json, 'polling'),
+        JsonFields.requiredMap(json, 'polling'),
       ),
       rebootstrap: VerificationRebootstrapPolicy.fromJson(
-        _requiredMap(json, 'rebootstrap'),
+        JsonFields.requiredMap(json, 'rebootstrap'),
       ),
     );
   }
-}
-
-String _requiredString(Map<String, Object?> json, String key) {
-  final value = json[key];
-  final parsed = value is String ? value.trim() : '';
-  if (parsed.isEmpty) throw FormatException('$key is missing or invalid.');
-  return parsed;
-}
-
-DateTime _requiredDateTime(Map<String, Object?> json, String key) {
-  final parsed = DateTime.tryParse(json[key]?.toString() ?? '')?.toUtc();
-  if (parsed == null) throw FormatException('$key is missing or invalid.');
-  return parsed;
-}
-
-List<String> _requiredStringList(Map<String, Object?> json, String key) {
-  final raw = json[key];
-  if (raw is! List) throw FormatException('$key must be a list.');
-  return raw.map((value) {
-    final parsed = value is String ? value.trim() : '';
-    if (parsed.isEmpty) {
-      throw FormatException('$key contains an invalid value.');
-    }
-    return parsed;
-  }).toList(growable: false);
-}
-
-Map<String, Object?> _requiredMap(Map<String, Object?> json, String key) {
-  final raw = json[key];
-  if (raw is! Map) throw FormatException('$key is missing or invalid.');
-  return Map<String, Object?>.from(raw);
 }
