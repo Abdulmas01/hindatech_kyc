@@ -27,3 +27,4 @@
 - Add customer-managed external asset reference submission.
 - Add stable verification results to recovered and polled session state.
 - Consume backend-owned liveness capture policy in bootstrap and recovery.
+- Add rotation-, mirror-, and crop-aware face alignment guidance foundations.
