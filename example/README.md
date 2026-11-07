@@ -21,6 +21,22 @@ in this example. Customer applications must add the same platform entries. The
 example also registers and passes a `RouteObserver` so camera analysis pauses
 when another route covers the capture screen.
 
+## Build an installable test APK
+
+The repository includes the manually triggered **Build Android test APK**
+GitHub Actions workflow. After pushing the repository to GitHub:
+
+1. Open the repository's **Actions** tab.
+2. Select **Build Android test APK** and choose **Run workflow**.
+3. When the run succeeds, download the
+   `hindatech-kyc-example-debug-*` artifact from the run summary.
+4. Extract `app-debug.apk`, transfer it to an Android phone, and install it.
+
+This is a debug-signed testing build and does not require release signing
+secrets. Android may ask permission to install apps from the browser or file
+manager used to open the APK. A later release build should use a protected
+production signing key instead.
+
 ## Physical-device validation
 
 - Cold-start each capture screen and confirm the loading message remains visible

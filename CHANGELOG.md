@@ -33,3 +33,4 @@
 - Add navigation-safe selfie camera runtime and explicit startup states.
 - Add the policy-driven selfie capture view and responsive face guide.
 - Demonstrate document and policy-guided selfie capture in the example app.
+- Add an on-demand GitHub Actions workflow for an installable Android test APK.
