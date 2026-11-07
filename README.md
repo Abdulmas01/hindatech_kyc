@@ -116,12 +116,22 @@ After submission, poll the SDK state using the backend-recommended interval:
 ```dart
 await for (final state in client.pollSession()) {
   updateVerificationStatus(state.status);
+  if (state.isTerminal) {
+    final result = state.result;
+    handleVerificationOutcome(
+      decision: result.decision,
+      failureCode: result.failureCode,
+      reasonCodes: result.reasonCodes,
+    );
+  }
 }
 ```
 
 The host may provide `VerificationPollingOptions` to override the interval or
 set a timeout. Poll requests are sequential, stop at terminal states, and stop
-when the stream subscription is cancelled.
+when the stream subscription is cancelled. `VerificationResult` contains the
+NestJS-normalized outcome needed by the mobile flow; detailed AI evidence stays
+behind the product backend boundary.
 
 Cancel a session before processing begins:
 
@@ -216,6 +226,7 @@ DocumentCaptureView(
 - Idempotent pre-processing session cancellation
 - Validated consent evidence recording and retrieval
 - Customer-managed external asset reference submission
+- Stable customer-safe results on recovered and polled session state
 - Document-capture configuration and result models
 - Adaptive document-frame processing
 - Host-controlled advisory quality guidance and auto-capture

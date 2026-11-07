@@ -19,6 +19,7 @@ export 'src/session/verification_consent.dart';
 export 'src/session/verification_payload.dart';
 export 'src/session/verification_polling.dart';
 export 'src/session/verification_required_inputs.dart';
+export 'src/session/verification_result.dart';
 export 'src/session/verification_session.dart';
 export 'src/session/verification_session_policies.dart';
 export 'src/session/verification_session_state.dart';

@@ -52,4 +52,17 @@ Map<String, Object?> sdkBootstrapPayload({
         'idempotencyRequired': true,
         'expiredSessionBehavior': 'new_session_on_expiry',
       },
+      'session': {
+        'id': 'verification-id',
+        'workflowKey': 'document_extract',
+        'sourceType': 'product_ui',
+        'status': 'started',
+        'decision': 'pending',
+        'riskScore': null,
+        'createdAt': '2026-08-02T16:00:00.000Z',
+        'completedAt': null,
+        'failureCode': null,
+        'failureMessage': null,
+        'reasonCodes': <String>[],
+      },
     };

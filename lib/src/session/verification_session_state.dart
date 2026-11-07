@@ -1,6 +1,7 @@
 import '../core/serialization/json_fields.dart';
 import 'hosted_asset.dart';
 import 'verification_required_inputs.dart';
+import 'verification_result.dart';
 import 'verification_session.dart';
 import 'verification_session_policies.dart';
 
@@ -10,24 +11,30 @@ class VerificationSessionState {
     required this.verificationSessionId,
     required this.sessionModeValue,
     required this.assetIngestionModeValue,
+    required List<String> supportedAssetIngestionModeValues,
     required this.workflowKey,
     required this.statusValue,
     required this.requiredInputs,
     required this.uploadPolicy,
     required this.polling,
     required this.rebootstrap,
+    required this.result,
     required List<HostedAsset> hostedAssets,
-  }) : hostedAssets = List.unmodifiable(hostedAssets);
+  })  : supportedAssetIngestionModeValues =
+            List.unmodifiable(supportedAssetIngestionModeValues),
+        hostedAssets = List.unmodifiable(hostedAssets);
 
   final String verificationSessionId;
   final String sessionModeValue;
   final String assetIngestionModeValue;
+  final List<String> supportedAssetIngestionModeValues;
   final String workflowKey;
   final String statusValue;
   final VerificationRequiredInputs requiredInputs;
   final VerificationUploadPolicy uploadPolicy;
   final VerificationPollingPolicy polling;
   final VerificationRebootstrapPolicy rebootstrap;
+  final VerificationResult result;
 
   /// Every unexpired staged upload returned by NestJS, including duplicates.
   final List<HostedAsset> hostedAssets;
@@ -56,6 +63,14 @@ class VerificationSessionState {
   factory VerificationSessionState.fromJson(Map<String, Object?> json) {
     final verificationSessionId =
         JsonFields.requiredString(json, 'verificationSessionId');
+    final result = VerificationResult.fromJson(
+      JsonFields.requiredMap(json, 'session'),
+    );
+    final statusValue = JsonFields.requiredString(json, 'status');
+    if (result.verificationSessionId != verificationSessionId ||
+        result.statusValue != statusValue) {
+      throw const FormatException('Session result identity is invalid.');
+    }
     final rawAssets = JsonFields.requiredList(json, 'hostedAssets');
     final hostedAssets = rawAssets.map((value) {
       if (value is! Map) {
@@ -75,8 +90,10 @@ class VerificationSessionState {
       sessionModeValue: JsonFields.requiredString(json, 'sessionMode'),
       assetIngestionModeValue:
           JsonFields.requiredString(json, 'assetIngestionMode'),
+      supportedAssetIngestionModeValues:
+          JsonFields.requiredStringList(json, 'supportedAssetIngestionModes'),
       workflowKey: JsonFields.requiredString(json, 'workflowKey'),
-      statusValue: JsonFields.requiredString(json, 'status'),
+      statusValue: statusValue,
       requiredInputs: VerificationRequiredInputs.fromJson(
         JsonFields.requiredMap(json, 'requiredInputs'),
       ),
@@ -89,6 +106,7 @@ class VerificationSessionState {
       rebootstrap: VerificationRebootstrapPolicy.fromJson(
         JsonFields.requiredMap(json, 'rebootstrap'),
       ),
+      result: result,
       hostedAssets: hostedAssets,
     );
   }

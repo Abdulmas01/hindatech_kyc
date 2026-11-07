@@ -50,8 +50,11 @@ VerificationSessionState _state(String status) {
     ..remove('sdkTokenExpiresAt')
     ..remove('allowedActions')
     ..remove('sessionExpiresAt')
-    ..remove('supportedAssetIngestionModes')
     ..['status'] = status
+    ..['session'] = {
+      ...(sdkBootstrapPayload()['session']! as Map<String, Object?>),
+      'status': status,
+    }
     ..['hostedAssets'] = <Object?>[];
   return VerificationSessionState.fromJson(payload);
 }
