@@ -2,10 +2,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hindatech_kyc_example/main.dart';
 
 void main() {
-  testWidgets('shows the document capture entry point', (tester) async {
+  testWidgets('shows document and selfie capture entry points', (tester) async {
     await tester.pumpWidget(const ExampleApp());
 
-    expect(find.text('Document capture example'), findsOneWidget);
+    expect(find.text('Capture examples'), findsOneWidget);
     expect(find.text('Start document capture'), findsOneWidget);
+    expect(find.text('Start selfie capture'), findsOneWidget);
+  });
+
+  test('demo policy remains backend-authoritative guidance only', () {
+    final policy = demoLivenessPolicy();
+
+    expect(policy.isBackendAuthoritative, isTrue);
+    expect(policy.isGuidanceOnly, isTrue);
+    expect(policy.temporalEvidenceSupported, isFalse);
   });
 }
