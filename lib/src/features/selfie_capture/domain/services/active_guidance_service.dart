@@ -24,11 +24,12 @@ class ActiveGuidanceService {
   int _challengeIndex = 0;
   bool _blinkPrimed = false;
   int? _trackingId;
+  DateTime? _pausedAt;
 
   ActiveGuidanceState get state => _state;
 
   ActiveGuidanceState evaluate(ActiveGuidanceFrame frame) {
-    if (_isTerminal) return _state;
+    if (_isTerminal || _pausedAt != null) return _state;
     final now = _clock();
     if (_deadlineReached(now)) return _timeOut();
 
@@ -54,8 +55,34 @@ class ActiveGuidanceService {
   }
 
   ActiveGuidanceState checkTimeout() {
-    if (_isTerminal) return _state;
+    if (_isTerminal || _pausedAt != null) return _state;
     return _deadlineReached(_clock()) ? _timeOut() : _state;
+  }
+
+  void pause() {
+    if (_isTerminal || _pausedAt != null) return;
+    _pausedAt = _clock();
+  }
+
+  ActiveGuidanceState resume() {
+    final pausedAt = _pausedAt;
+    if (pausedAt == null) return _state;
+    final now = _clock();
+    _pausedAt = null;
+    final deadline = _state.challengeDeadline;
+    if (deadline == null) return _state;
+    final elapsed =
+        now.isAfter(pausedAt) ? now.difference(pausedAt) : Duration.zero;
+    _state = ActiveGuidanceState(
+      phase: _state.phase,
+      signal: _state.signal,
+      activeChallenge: _state.activeChallenge,
+      completedChallengeCount: _state.completedChallengeCount,
+      totalChallengeCount: _state.totalChallengeCount,
+      challengeDeadline: deadline.add(elapsed),
+      alignmentSignal: _state.alignmentSignal,
+    );
+    return _state;
   }
 
   ActiveGuidanceState restart() {
@@ -91,6 +118,7 @@ class ActiveGuidanceService {
     _challengeIndex = 0;
     _blinkPrimed = false;
     _trackingId = null;
+    _pausedAt = null;
     _state = ActiveGuidanceState(
       phase: ActiveGuidancePhase.awaitingAlignment,
       signal: ActiveGuidanceSignal.alignFace,

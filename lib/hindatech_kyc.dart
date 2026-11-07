@@ -9,6 +9,7 @@ export 'src/features/document_capture/domain/models/document_quality_assessment.
 export 'src/features/document_capture/presentation/widgets/document_capture_overlay.dart';
 export 'src/features/document_capture/presentation/widgets/document_capture_view.dart';
 export 'src/features/document_capture/presentation/widgets/document_quality_guidance_banner.dart';
+export 'src/features/selfie_capture/domain/models/selfie_capture_config.dart';
 export 'src/presentation/document_capture_strings.dart';
 export 'src/presentation/document_capture_theme.dart';
 export 'src/session/external_asset_submission.dart';

@@ -81,4 +81,28 @@ void main() {
     expect(wasCalled, isFalse);
     expect(coordinator.isDisposed, isTrue);
   });
+
+  test('keeps app and route activity independent', () {
+    final coordinator = CameraLifecycleCoordinator();
+
+    coordinator.setRouteActive(false);
+    expect(coordinator.isActive, isFalse);
+    expect(coordinator.isAppActive, isTrue);
+
+    coordinator.setAppActive(false);
+    coordinator.setRouteActive(true);
+    expect(coordinator.isActive, isFalse);
+
+    coordinator.setAppActive(true);
+    expect(coordinator.isActive, isTrue);
+  });
+
+  test('still runs queued cleanup after disposal is marked', () async {
+    final coordinator = CameraLifecycleCoordinator();
+    coordinator.markDisposed();
+
+    await coordinator.disposeController(null);
+
+    expect(coordinator.isStreaming, isFalse);
+  });
 }

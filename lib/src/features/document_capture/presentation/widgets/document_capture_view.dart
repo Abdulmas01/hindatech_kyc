@@ -146,11 +146,11 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!mounted || _lifecycle.isDisposed) return;
     if (state == AppLifecycleState.resumed) {
-      _lifecycle.setActive(true);
+      _lifecycle.setAppActive(true);
       unawaited(_initialize());
       return;
     }
-    _lifecycle.setActive(false);
+    _lifecycle.setAppActive(false);
     _cancelAutoCapture();
     unawaited(_disposeCamera());
   }

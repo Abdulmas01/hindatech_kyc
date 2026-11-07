@@ -108,6 +108,30 @@ void main() {
       expect(state.completedChallengeCount, 0);
     });
 
+    test('preserves remaining challenge time while lifecycle is paused', () {
+      var now = DateTime.utc(2026, 1, 1);
+      final service = ActiveGuidanceService(
+        config: ActiveGuidanceConfig(policy: _policy()),
+        clock: () => now,
+      );
+      var state = service.evaluate(_frame(eyes: 0.9));
+      final originalDeadline = state.challengeDeadline!;
+
+      now = now.add(const Duration(seconds: 5));
+      service.pause();
+      now = now.add(const Duration(seconds: 20));
+      expect(service.checkTimeout().hasTimedOut, isFalse);
+
+      state = service.resume();
+      expect(
+        state.challengeDeadline,
+        originalDeadline.add(const Duration(seconds: 20)),
+      );
+
+      now = state.challengeDeadline!;
+      expect(service.checkTimeout().hasTimedOut, isTrue);
+    });
+
     test('enforces the backend single-face requirement during guidance', () {
       final service = ActiveGuidanceService(
         config: ActiveGuidanceConfig(policy: _policy()),
