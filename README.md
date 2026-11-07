@@ -1,10 +1,10 @@
 # Hindatech KYC
 
-Flutter SDK for integrating Hindatech identity-verification workflows into a
+Flutter SDK for integrating document capture, policy-guided selfie capture,
+and backend-authoritative Hindatech identity-verification workflows into a
 customer application.
 
-> This package is under active development and is not ready for production or
-> publication on pub.dev.
+> This package is a pre-release. Its public API can change before version 1.0.
 
 ## Security
 
@@ -293,7 +293,15 @@ DocumentCaptureView(
 - Customizable document framing overlay
 - Customer-configurable copy and visual tokens
 - Guided document capture view with capture, retake, and lifecycle handling
-- Runnable Android and iOS integration example
+- Backend-policy-driven face alignment and active capture guidance
+- Lifecycle-safe selfie camera analysis with adaptive frame processing
+- Responsive selfie guide, configurable transitions, capture, and retake flow
+- Explicit ownership and cleanup for temporary selfie images
+- Runnable Android and iOS document and selfie integration example
 
 The package does not currently bundle a production-approved quality model.
 Remaining workflow orchestration will be added incrementally.
+
+## License
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).

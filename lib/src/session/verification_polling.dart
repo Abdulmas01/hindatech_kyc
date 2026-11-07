@@ -1,3 +1,5 @@
+import 'dart:async';
+
 /// Host-controlled limits for SDK session polling.
 class VerificationPollingOptions {
   const VerificationPollingOptions({

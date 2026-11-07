@@ -1,7 +1,20 @@
 name: hindatech_kyc
-description: Flutter SDK for integrating Hindatech identity verification workflows.
+description: Flutter SDK for document capture, selfie guidance, and backend-authoritative identity verification workflows powered by Hindatech.
 version: 0.1.0-dev.1
-publish_to: none
+homepage: https://hindatech.com
+repository: https://github.com/Abdulmas01/hindatech_kyc
+issue_tracker: https://github.com/Abdulmas01/hindatech_kyc/issues
+
+topics:
+  - identity-verification
+  - kyc
+  - document-capture
+  - selfie-capture
+  - liveness
+
+platforms:
+  android:
+  ios:
 
 environment:
   sdk: ^3.6.1
