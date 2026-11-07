@@ -31,7 +31,7 @@ void main() {
       expect(state.completedChallengeCount, 1);
 
       state = service.evaluate(
-        _frame(yaw: -22, alignmentSignal: FaceAlignmentSignal.lookStraight),
+        _frame(yaw: 22, alignmentSignal: FaceAlignmentSignal.lookStraight),
       );
       expect(state.phase, ActiveGuidancePhase.returningToNeutral);
 
@@ -183,12 +183,58 @@ void main() {
       service.evaluate(_frame(yaw: 0));
 
       final state = service.evaluate(
-        _frame(yaw: 22, alignmentSignal: FaceAlignmentSignal.lookStraight),
+        _frame(yaw: -22, alignmentSignal: FaceAlignmentSignal.lookStraight),
       );
 
       expect(state.phase, ActiveGuidancePhase.awaitingCaptureAlignment);
       expect(state.completedChallengeCount, 1);
       expect(state.suggestsCapture, isFalse);
+    });
+
+    test('interprets head turns relative to the subject', () {
+      final left = ActiveGuidanceService(
+        config: ActiveGuidanceConfig(
+          policy: _policy(
+            challenges: const ['turn_left'],
+            challengeCount: 1,
+            requireReturnToNeutral: false,
+          ),
+        ),
+      );
+      left.evaluate(_frame(yaw: 0));
+      expect(
+        left
+            .evaluate(
+              _frame(
+                yaw: 22,
+                alignmentSignal: FaceAlignmentSignal.lookStraight,
+              ),
+            )
+            .completedChallengeCount,
+        1,
+      );
+
+      final right = ActiveGuidanceService(
+        config: ActiveGuidanceConfig(
+          policy: _policy(
+            challenges: const ['turn_right'],
+            challengeCount: 1,
+            requireReturnToNeutral: false,
+          ),
+        ),
+      );
+      right.evaluate(_frame(yaw: 0));
+      expect(
+        right
+            .evaluate(
+              _frame(
+                yaw: -22,
+                alignmentSignal: FaceAlignmentSignal.lookStraight,
+              ),
+            )
+            .completedChallengeCount,
+        1,
+      );
     });
 
     test('resets blink priming when the tracked face changes', () {

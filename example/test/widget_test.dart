@@ -8,13 +8,15 @@ void main() {
     expect(find.text('Capture examples'), findsOneWidget);
     expect(find.text('Start document capture'), findsOneWidget);
     expect(find.text('Start selfie capture'), findsOneWidget);
+    expect(find.byTooltip('Capture test settings'), findsOneWidget);
   });
 
   test('demo policy remains backend-authoritative guidance only', () {
-    final policy = demoLivenessPolicy();
+    final policy = demoLivenessPolicy(randomize: false);
 
     expect(policy.isBackendAuthoritative, isTrue);
     expect(policy.isGuidanceOnly, isTrue);
     expect(policy.temporalEvidenceSupported, isFalse);
+    expect(policy.randomize, isFalse);
   });
 }

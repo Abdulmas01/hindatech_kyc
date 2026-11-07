@@ -2,6 +2,8 @@
 
 - Add Apache 2.0 licensing and Pub.dev package metadata.
 - Add an explicit Hindatech production API configuration preset.
+- Accept CameraX NV21 frames reported as YUV420 on affected Android versions.
+- Interpret head-turn guidance relative to the subject and expose safe capture diagnostics.
 - Establish the public SDK package boundary.
 - Add SDK configuration and session contracts.
 - Add forward-compatible capture-manifest parsing.

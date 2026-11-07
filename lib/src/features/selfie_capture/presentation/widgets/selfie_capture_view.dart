@@ -17,6 +17,7 @@ import '../../domain/models/active_guidance.dart';
 import '../../domain/models/face_alignment.dart';
 import '../../domain/models/face_guide_config.dart';
 import '../../domain/models/selfie_capture_config.dart';
+import '../../domain/models/selfie_capture_diagnostics.dart';
 import '../../domain/models/selfie_capture_result.dart';
 import '../../domain/services/active_guidance_service.dart';
 import '../controllers/selfie_capture_notifier.dart';
@@ -32,6 +33,7 @@ class SelfieCaptureView extends StatelessWidget {
     super.key,
     this.onCancel,
     this.onError,
+    this.onDiagnosticsChanged,
     this.config = const SelfieCaptureConfig.balanced(),
     this.guideConfig = const FaceGuideConfig(),
     this.strings = const SelfieCaptureStrings(),
@@ -50,6 +52,12 @@ class SelfieCaptureView extends StatelessWidget {
   final ValueChanged<SelfieCaptureResult> onCompleted;
   final VoidCallback? onCancel;
   final ValueChanged<Object>? onError;
+
+  /// Receives device-local capture diagnostics when their values change.
+  ///
+  /// These snapshots are intended for integration testing and operational
+  /// troubleshooting. They never represent a liveness decision.
+  final ValueChanged<SelfieCaptureDiagnostics>? onDiagnosticsChanged;
   final SelfieCaptureConfig config;
   final FaceGuideConfig guideConfig;
   final SelfieCaptureStrings strings;
@@ -70,6 +78,7 @@ class SelfieCaptureView extends StatelessWidget {
         onCompleted: onCompleted,
         onCancel: onCancel,
         onError: onError,
+        onDiagnosticsChanged: onDiagnosticsChanged,
         config: config,
         guideConfig: guideConfig,
         strings: strings,
@@ -92,6 +101,7 @@ class _SelfieCaptureBody extends ConsumerStatefulWidget {
     required this.autoInitialize,
     this.onCancel,
     this.onError,
+    this.onDiagnosticsChanged,
     this.routeObserver,
   });
 
@@ -99,6 +109,7 @@ class _SelfieCaptureBody extends ConsumerStatefulWidget {
   final ValueChanged<SelfieCaptureResult> onCompleted;
   final VoidCallback? onCancel;
   final ValueChanged<Object>? onError;
+  final ValueChanged<SelfieCaptureDiagnostics>? onDiagnosticsChanged;
   final SelfieCaptureConfig config;
   final FaceGuideConfig guideConfig;
   final SelfieCaptureStrings strings;
@@ -132,6 +143,7 @@ class _SelfieCaptureBodyState extends ConsumerState<_SelfieCaptureBody>
   bool _isAppActive = true;
   bool _isRouteActive = true;
   ModalRoute<dynamic>? _subscribedRoute;
+  SelfieCaptureDiagnostics? _lastDiagnostics;
 
   @override
   void initState() {
@@ -361,6 +373,7 @@ class _SelfieCaptureBodyState extends ConsumerState<_SelfieCaptureBody>
       )
           .then((result) {
         if (!mounted || result == null) return;
+        _reportDiagnostics(result);
         ref
             .read(selfieCaptureProvider.notifier)
             .updateGuidance(result.guidance);
@@ -369,6 +382,40 @@ class _SelfieCaptureBodyState extends ConsumerState<_SelfieCaptureBody>
       }),
     );
   }
+
+  void _reportDiagnostics(SelfieFrameProcessingResult result) {
+    final callback = widget.onDiagnosticsChanged;
+    if (callback == null) return;
+    final analysis = result.analysis;
+    final primary = analysis.toActiveGuidanceFrame().primaryFace;
+    final diagnostics = SelfieCaptureDiagnostics(
+      detectedFaceCount: analysis.faces.length,
+      signal: _diagnosticSignal(analysis.alignment.assessment.signal),
+      consecutiveAlignedFrames: analysis.alignment.consecutiveAlignedFrames,
+      requiredAlignedFrames: widget.policy.alignmentStabilityFrames,
+      activeChallenge: result.guidance.activeChallenge,
+      subjectYawDegrees: primary?.yawDegrees,
+    );
+    if (diagnostics == _lastDiagnostics) return;
+    _lastDiagnostics = diagnostics;
+    callback(diagnostics);
+  }
+
+  SelfieDiagnosticSignal _diagnosticSignal(FaceAlignmentSignal signal) =>
+      switch (signal) {
+        FaceAlignmentSignal.noFace => SelfieDiagnosticSignal.noFace,
+        FaceAlignmentSignal.multipleFaces =>
+          SelfieDiagnosticSignal.multipleFaces,
+        FaceAlignmentSignal.moveCloser => SelfieDiagnosticSignal.moveCloser,
+        FaceAlignmentSignal.moveBack => SelfieDiagnosticSignal.moveBack,
+        FaceAlignmentSignal.moveLeft => SelfieDiagnosticSignal.moveLeft,
+        FaceAlignmentSignal.moveRight => SelfieDiagnosticSignal.moveRight,
+        FaceAlignmentSignal.moveUp => SelfieDiagnosticSignal.moveUp,
+        FaceAlignmentSignal.moveDown => SelfieDiagnosticSignal.moveDown,
+        FaceAlignmentSignal.lookStraight => SelfieDiagnosticSignal.lookStraight,
+        FaceAlignmentSignal.holdStill => SelfieDiagnosticSignal.holdStill,
+        FaceAlignmentSignal.aligned => SelfieDiagnosticSignal.aligned,
+      };
 
   void _checkGuidanceDeadline() {
     if (!mounted || !_isAppActive || !_isRouteActive) return;

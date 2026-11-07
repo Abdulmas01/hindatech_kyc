@@ -310,6 +310,10 @@ DocumentCaptureView(
 The package does not currently bundle a production-approved quality model.
 Remaining workflow orchestration will be added incrementally.
 
+The runnable example includes an optional diagnostics sheet for physical-device
+testing. Its document quality buttons inject simulated advisory observations;
+they validate SDK guidance behavior, not a quality model or verification result.
+
 ## License
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).

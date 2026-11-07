@@ -10,6 +10,7 @@ export 'src/features/document_capture/presentation/widgets/document_capture_over
 export 'src/features/document_capture/presentation/widgets/document_capture_view.dart';
 export 'src/features/document_capture/presentation/widgets/document_quality_guidance_banner.dart';
 export 'src/features/selfie_capture/domain/models/selfie_capture_config.dart';
+export 'src/features/selfie_capture/domain/models/selfie_capture_diagnostics.dart';
 export 'src/features/selfie_capture/domain/models/face_guide_config.dart';
 export 'src/features/selfie_capture/domain/models/selfie_capture_result.dart';
 export 'src/features/selfie_capture/presentation/widgets/selfie_capture_overlay.dart';

@@ -227,11 +227,13 @@ class ActiveGuidanceService {
       return _withSignal(ActiveGuidanceSignal.faceNotClear);
     }
     final challenge = _sequence[_challengeIndex];
+    // ML Kit yaw is camera-relative: positive points to the right side of the
+    // processed image, which is the subject's anatomical left in a portrait.
     final completed = switch (challenge) {
       VerificationLivenessChallenge.turnLeft =>
-        yaw < -_config.headTurnThresholdDegrees,
-      VerificationLivenessChallenge.turnRight =>
         yaw > _config.headTurnThresholdDegrees,
+      VerificationLivenessChallenge.turnRight =>
+        yaw < -_config.headTurnThresholdDegrees,
       VerificationLivenessChallenge.blink ||
       VerificationLivenessChallenge.unknown =>
         false,

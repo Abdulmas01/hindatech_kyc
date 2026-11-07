@@ -94,10 +94,12 @@ class SelfieInputImageAdapter {
     Size size,
     InputImageRotation rotation,
   ) {
-    final format = InputImageFormatValue.fromRawValue(image.format.raw);
     Uint8List? bytes;
-    if (format == InputImageFormat.nv21 && image.planes.length == 1) {
-      bytes = image.planes.single.bytes;
+    if (image.planes.length == 1) {
+      // CameraX versions before 0.6.23 can return requested NV21 bytes while
+      // reporting the stream as YUV420. The single-plane layout is the
+      // reliable discriminator because this controller always requests NV21.
+      bytes = _readSinglePlaneNv21(image);
     } else {
       bytes = _yuv420ToNv21(image);
     }
@@ -111,6 +113,14 @@ class SelfieInputImageAdapter {
         format: InputImageFormat.nv21,
         bytesPerRow: image.width,
       ),
+    );
+  }
+
+  Uint8List? _readSinglePlaneNv21(CameraImage image) {
+    return normalizeSinglePlaneNv21Bytes(
+      source: image.planes.single.bytes,
+      width: image.width,
+      height: image.height,
     );
   }
 
@@ -151,4 +161,16 @@ class SelfieInputImageAdapter {
     }
     return output;
   }
+}
+
+/// Normalizes a possibly padded CameraX NV21 buffer for ML Kit.
+Uint8List? normalizeSinglePlaneNv21Bytes({
+  required Uint8List source,
+  required int width,
+  required int height,
+}) {
+  final expectedLength = width * height * 3 ~/ 2;
+  if (source.length < expectedLength) return null;
+  if (source.length == expectedLength) return source;
+  return Uint8List.sublistView(source, 0, expectedLength);
 }

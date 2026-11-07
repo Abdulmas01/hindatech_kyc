@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hindatech_kyc/hindatech_kyc.dart';
 
 void main() => runApp(const ExampleApp());
@@ -36,10 +37,25 @@ class ExampleHomePage extends StatefulWidget {
 class _ExampleHomePageState extends State<ExampleHomePage> {
   DocumentCaptureResult? _lastDocumentCapture;
   SelfieCaptureResult? _lastSelfieCapture;
+  _ExampleCaptureSettings _settings = const _ExampleCaptureSettings();
+
+  Future<void> _openCaptureSettings() async {
+    final next = await showModalBottomSheet<_ExampleCaptureSettings>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _CaptureSettingsSheet(initial: _settings),
+    );
+    if (next != null && mounted) setState(() => _settings = next);
+  }
 
   Future<void> _startDocumentCapture() async {
     final result = await Navigator.of(context).push<DocumentCaptureResult>(
-      MaterialPageRoute(builder: (_) => const DocumentCapturePage()),
+      MaterialPageRoute(
+        builder: (_) => DocumentCapturePage(
+          config: _settings.documentConfig,
+          showDiagnostics: _settings.showDiagnostics,
+        ),
+      ),
     );
     if (result == null) return;
     if (!mounted) {
@@ -56,7 +72,9 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
     final result = await Navigator.of(context).push<SelfieCaptureResult>(
       MaterialPageRoute(
         builder: (_) => SelfieCapturePage(
-          policy: demoLivenessPolicy(),
+          policy: demoLivenessPolicy(randomize: _settings.randomizeChallenges),
+          config: _settings.selfieConfig,
+          showDiagnostics: _settings.showDiagnostics,
         ),
       ),
     );
@@ -87,7 +105,16 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Hindatech KYC')),
+      appBar: AppBar(
+        title: const Text('Hindatech KYC'),
+        actions: [
+          IconButton(
+            tooltip: 'Capture test settings',
+            onPressed: _openCaptureSettings,
+            icon: const Icon(Icons.tune),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
@@ -143,27 +170,72 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
   }
 }
 
-class SelfieCapturePage extends StatelessWidget {
-  const SelfieCapturePage({required this.policy, super.key});
+class SelfieCapturePage extends StatefulWidget {
+  const SelfieCapturePage({
+    required this.policy,
+    required this.config,
+    required this.showDiagnostics,
+    super.key,
+  });
 
   final VerificationLivenessPolicy policy;
+  final SelfieCaptureConfig config;
+  final bool showDiagnostics;
+
+  @override
+  State<SelfieCapturePage> createState() => _SelfieCapturePageState();
+}
+
+class _SelfieCapturePageState extends State<SelfieCapturePage> {
+  final ValueNotifier<SelfieCaptureDiagnostics?> _diagnostics =
+      ValueNotifier(null);
+
+  @override
+  void dispose() {
+    _diagnostics.dispose();
+    super.dispose();
+  }
+
+  void _showDiagnostics() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => _SelfieDiagnosticsSheet(diagnostics: _diagnostics),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SelfieCaptureView(
-        policy: policy,
-        routeObserver: exampleRouteObserver,
-        config: const SelfieCaptureConfig.balanced(),
-        onCompleted: (result) => Navigator.of(context).pop(result),
-        onCancel: () => Navigator.of(context).pop(),
-        onError: (_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Selfie capture could not be completed.'),
+      body: Stack(
+        children: [
+          SelfieCaptureView(
+            policy: widget.policy,
+            routeObserver: exampleRouteObserver,
+            config: widget.config,
+            onDiagnosticsChanged: (value) => _diagnostics.value = value,
+            onCompleted: (result) => Navigator.of(context).pop(result),
+            onCancel: () => Navigator.of(context).pop(),
+            onError: (_) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Selfie capture could not be completed.'),
+                ),
+              );
+            },
+          ),
+          if (widget.showDiagnostics)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: SafeArea(
+                child: IconButton.filledTonal(
+                  tooltip: 'Selfie diagnostics',
+                  onPressed: _showDiagnostics,
+                  icon: const Icon(Icons.monitor_heart_outlined),
+                ),
+              ),
             ),
-          );
-        },
+        ],
       ),
     );
   }
@@ -173,7 +245,7 @@ class SelfieCapturePage extends StatelessWidget {
 ///
 /// Production applications must pass `client.session.livenessPolicy` from the
 /// NestJS bootstrap or recovery response instead of constructing this policy.
-VerificationLivenessPolicy demoLivenessPolicy() {
+VerificationLivenessPolicy demoLivenessPolicy({bool randomize = true}) {
   return VerificationLivenessPolicy(
     version: 'demo-v1',
     modeValue: 'passive_with_active_guidance',
@@ -181,7 +253,7 @@ VerificationLivenessPolicy demoLivenessPolicy() {
     activeGuidanceRoleValue: 'guidance_only',
     challengeCount: 2,
     allowedChallengeValues: const ['blink', 'turn_left', 'turn_right'],
-    randomize: true,
+    randomize: randomize,
     challengeTimeout: const Duration(seconds: 8),
     alignmentStabilityFrames: 5,
     requireSingleFace: true,
@@ -263,27 +335,352 @@ class _CaptureResultPanel extends StatelessWidget {
   }
 }
 
-class DocumentCapturePage extends StatelessWidget {
-  const DocumentCapturePage({super.key});
+class DocumentCapturePage extends StatefulWidget {
+  const DocumentCapturePage({
+    required this.config,
+    required this.showDiagnostics,
+    super.key,
+  });
+
+  final DocumentCaptureConfig config;
+  final bool showDiagnostics;
+
+  @override
+  State<DocumentCapturePage> createState() => _DocumentCapturePageState();
+}
+
+class _DocumentCapturePageState extends State<DocumentCapturePage> {
+  final StreamController<DocumentQualityAssessment> _qualityAssessments =
+      StreamController.broadcast();
+
+  @override
+  void dispose() {
+    unawaited(_qualityAssessments.close());
+    super.dispose();
+  }
+
+  void _emitQuality(DocumentQualitySignal signal) {
+    final assessment = DocumentQualityAssessment(
+      signal: signal,
+      confidence: signal == DocumentQualitySignal.unknown ? 0 : 0.95,
+      source: DocumentQualitySource.heuristic,
+    );
+    for (var index = 0;
+        index < widget.config.guidanceStabilityFrames;
+        index++) {
+      _qualityAssessments.add(assessment);
+    }
+  }
+
+  void _showDiagnostics() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => _DocumentDiagnosticsSheet(
+        config: widget.config,
+        onSignalSelected: (signal) {
+          Navigator.of(context).pop();
+          _emitQuality(signal);
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: DocumentCaptureView(
-        config: const DocumentCaptureConfig.highQuality(),
-        strings: const DocumentCaptureStrings(
-          documentInstruction:
-              'Keep the document flat and place all four corners inside the frame.',
-        ),
-        onCompleted: (result) => Navigator.of(context).pop(result),
-        onCancel: () => Navigator.of(context).pop(),
-        onError: (_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Document capture could not be completed.'),
+      body: Stack(
+        children: [
+          DocumentCaptureView(
+            config: widget.config,
+            qualityAssessments:
+                widget.showDiagnostics ? _qualityAssessments.stream : null,
+            strings: const DocumentCaptureStrings(
+              documentInstruction:
+                  'Keep the document flat and place all four corners inside the frame.',
             ),
-          );
-        },
+            onCompleted: (result) => Navigator.of(context).pop(result),
+            onCancel: () => Navigator.of(context).pop(),
+            onError: (_) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Document capture could not be completed.'),
+                ),
+              );
+            },
+          ),
+          if (widget.showDiagnostics)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: SafeArea(
+                child: IconButton.filledTonal(
+                  tooltip: 'Document diagnostics',
+                  onPressed: _showDiagnostics,
+                  icon: const Icon(Icons.science_outlined),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _CapturePreset { fast, balanced, highQuality }
+
+class _ExampleCaptureSettings {
+  const _ExampleCaptureSettings({
+    this.documentPreset = _CapturePreset.highQuality,
+    this.documentFrameProfile = DocumentFrameProfile.standard,
+    this.documentAutoCapture = true,
+    this.selfiePreset = _CapturePreset.balanced,
+    this.randomizeChallenges = true,
+    this.showDiagnostics = true,
+  });
+
+  final _CapturePreset documentPreset;
+  final DocumentFrameProfile documentFrameProfile;
+  final bool documentAutoCapture;
+  final _CapturePreset selfiePreset;
+  final bool randomizeChallenges;
+  final bool showDiagnostics;
+
+  DocumentCaptureConfig get documentConfig {
+    final base = switch (documentPreset) {
+      _CapturePreset.fast => const DocumentCaptureConfig.fast(),
+      _CapturePreset.balanced => const DocumentCaptureConfig.balanced(),
+      _CapturePreset.highQuality => const DocumentCaptureConfig.highQuality(),
+    };
+    return base.copyWith(
+      frameProfile: documentFrameProfile,
+      autoCaptureEnabled: documentAutoCapture,
+    );
+  }
+
+  SelfieCaptureConfig get selfieConfig => switch (selfiePreset) {
+        _CapturePreset.fast => const SelfieCaptureConfig.fast(),
+        _CapturePreset.balanced => const SelfieCaptureConfig.balanced(),
+        _CapturePreset.highQuality => const SelfieCaptureConfig.highQuality(),
+      };
+}
+
+class _CaptureSettingsSheet extends StatefulWidget {
+  const _CaptureSettingsSheet({required this.initial});
+
+  final _ExampleCaptureSettings initial;
+
+  @override
+  State<_CaptureSettingsSheet> createState() => _CaptureSettingsSheetState();
+}
+
+class _CaptureSettingsSheetState extends State<_CaptureSettingsSheet> {
+  late _CapturePreset _documentPreset = widget.initial.documentPreset;
+  late DocumentFrameProfile _documentFrameProfile =
+      widget.initial.documentFrameProfile;
+  late bool _documentAutoCapture = widget.initial.documentAutoCapture;
+  late _CapturePreset _selfiePreset = widget.initial.selfiePreset;
+  late bool _randomizeChallenges = widget.initial.randomizeChallenges;
+  late bool _showDiagnostics = widget.initial.showDiagnostics;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Capture test settings',
+                style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<_CapturePreset>(
+              value: _documentPreset,
+              decoration: const InputDecoration(labelText: 'Document preset'),
+              items: _presetItems(),
+              onChanged: (value) {
+                if (value != null) setState(() => _documentPreset = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<DocumentFrameProfile>(
+              value: _documentFrameProfile,
+              decoration:
+                  const InputDecoration(labelText: 'Document frame profile'),
+              items: DocumentFrameProfile.values
+                  .map(
+                    (value) => DropdownMenuItem(
+                      value: value,
+                      child: Text(value.name),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _documentFrameProfile = value);
+                }
+              },
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Document auto-capture'),
+              subtitle: const Text('Requires a supplied quality signal.'),
+              value: _documentAutoCapture,
+              onChanged: (value) =>
+                  setState(() => _documentAutoCapture = value),
+            ),
+            const Divider(),
+            DropdownButtonFormField<_CapturePreset>(
+              value: _selfiePreset,
+              decoration: const InputDecoration(labelText: 'Selfie preset'),
+              items: _presetItems(),
+              onChanged: (value) {
+                if (value != null) setState(() => _selfiePreset = value);
+              },
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Randomize demo challenges'),
+              value: _randomizeChallenges,
+              onChanged: (value) =>
+                  setState(() => _randomizeChallenges = value),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Show diagnostic buttons'),
+              subtitle: const Text('Example APK only.'),
+              value: _showDiagnostics,
+              onChanged: (value) => setState(() => _showDiagnostics = value),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(
+                _ExampleCaptureSettings(
+                  documentPreset: _documentPreset,
+                  documentFrameProfile: _documentFrameProfile,
+                  documentAutoCapture: _documentAutoCapture,
+                  selfiePreset: _selfiePreset,
+                  randomizeChallenges: _randomizeChallenges,
+                  showDiagnostics: _showDiagnostics,
+                ),
+              ),
+              child: const Text('Apply settings'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<DropdownMenuItem<_CapturePreset>> _presetItems() => _CapturePreset.values
+      .map(
+        (value) => DropdownMenuItem(
+          value: value,
+          child: Text(value.name),
+        ),
+      )
+      .toList();
+}
+
+class _SelfieDiagnosticsSheet extends StatelessWidget {
+  const _SelfieDiagnosticsSheet({required this.diagnostics});
+
+  final ValueListenable<SelfieCaptureDiagnostics?> diagnostics;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: ValueListenableBuilder<SelfieCaptureDiagnostics?>(
+          valueListenable: diagnostics,
+          builder: (context, value, _) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Selfie diagnostics',
+                    style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 12),
+                if (value == null)
+                  const Text('No camera frame has completed analysis yet.')
+                else ...[
+                  Text('Detected faces: ${value.detectedFaceCount}'),
+                  Text('Alignment: ${value.signal.name}'),
+                  Text(
+                    'Stable frames: ${value.consecutiveAlignedFrames}/${value.requiredAlignedFrames}',
+                  ),
+                  Text(
+                    'Subject yaw: ${value.subjectYawDegrees?.toStringAsFixed(1) ?? 'unavailable'}',
+                  ),
+                  Text(
+                    'Challenge: ${value.activeChallenge?.wireValue ?? 'not started'}',
+                  ),
+                ],
+                const SizedBox(height: 12),
+                const Text(
+                  'These values describe local capture guidance only. The backend owns the liveness decision.',
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _DocumentDiagnosticsSheet extends StatelessWidget {
+  const _DocumentDiagnosticsSheet({
+    required this.config,
+    required this.onSignalSelected,
+  });
+
+  final DocumentCaptureConfig config;
+  final ValueChanged<DocumentQualitySignal> onSignalSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    const signals = [
+      DocumentQualitySignal.good,
+      DocumentQualitySignal.blurry,
+      DocumentQualitySignal.glare,
+      DocumentQualitySignal.dark,
+      DocumentQualitySignal.noDocument,
+      DocumentQualitySignal.unknown,
+    ];
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Document diagnostics',
+                style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text('Resolution: ${config.resolution.name}'),
+            Text('Frame profile: ${config.frameProfile.name}'),
+            Text('Auto-capture: ${config.autoCaptureEnabled}'),
+            const SizedBox(height: 12),
+            const Text(
+              'Simulate a quality observation to test guidance UI. This does not test a production quality model.',
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: signals
+                  .map(
+                    (signal) => ActionChip(
+                      label: Text(signal.name),
+                      onPressed: () => onSignalSelected(signal),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
+        ),
       ),
     );
   }
