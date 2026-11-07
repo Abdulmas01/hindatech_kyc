@@ -4,6 +4,7 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 import '../../../../core/camera/camera_preview_geometry.dart';
 import '../../../../session/verification_liveness_policy.dart';
+import '../../domain/models/active_guidance.dart';
 import '../../domain/models/face_alignment.dart';
 
 enum CameraRuntimePlatform { android, iOS }
@@ -149,4 +150,31 @@ class SelfieFrameAnalysis {
   final StableFaceAlignment alignment;
 
   bool get suggestsCaptureReady => alignment.suggestsCaptureReady;
+
+  ActiveGuidanceFrame toActiveGuidanceFrame() {
+    MappedFaceObservation? primary;
+    final assessedBounds = alignment.assessment.faceBounds;
+    if (assessedBounds != null) {
+      for (final face in faces) {
+        if (face.geometry.bounds == assessedBounds) {
+          primary = face;
+          break;
+        }
+      }
+    }
+    primary ??= faces.isEmpty ? null : faces.first;
+
+    return ActiveGuidanceFrame(
+      faceCount: faces.length,
+      primaryFace: primary == null
+          ? null
+          : ActiveGuidanceFace(
+              yawDegrees: primary.geometry.yawDegrees,
+              leftEyeOpenProbability: primary.leftEyeOpenProbability,
+              rightEyeOpenProbability: primary.rightEyeOpenProbability,
+              trackingId: primary.trackingId,
+            ),
+      alignment: alignment,
+    );
+  }
 }
