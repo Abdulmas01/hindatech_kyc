@@ -29,14 +29,22 @@ control of its own endpoint and authentication:
 
 ```dart
 final client = await KycClient.bootstrap(
-  config: KycConfig(
-    apiBaseUri: Uri.parse('https://api.example.com/api/v1/'),
-  ),
+  config: KycConfig.production(),
   sessionProvider: () async {
     final response = await customerApi.createVerification();
     // Return the NestJS SDK bootstrap response unchanged.
     return response.json;
   },
+);
+```
+
+`KycConfig.production()` uses
+`https://api.kyc.hindatech.com/api/v1/`. Use the standard constructor to
+override the base URI for a sandbox, local NestJS instance, or customer proxy:
+
+```dart
+final config = KycConfig(
+  apiBaseUri: Uri.parse('https://sandbox.example.com/api/v1/'),
 );
 ```
 

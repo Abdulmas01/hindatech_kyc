@@ -57,6 +57,18 @@ void main() {
     expect(config.maxPollingAttempts, 30);
   });
 
+  test('KycConfig production preset uses the hosted Hindatech API', () {
+    final config = KycConfig.production();
+
+    expect(
+      config.apiBaseUri,
+      Uri.parse('https://api.kyc.hindatech.com/api/v1/'),
+    );
+    expect(config.requestTimeout, const Duration(seconds: 30));
+    expect(config.pollingInterval, const Duration(seconds: 2));
+    expect(config.maxPollingAttempts, 30);
+  });
+
   test('KycConfig rejects non-positive timing values', () {
     expect(
       () => KycConfig(

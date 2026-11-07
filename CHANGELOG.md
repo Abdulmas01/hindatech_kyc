@@ -1,6 +1,7 @@
 ## 0.1.0-dev.1
 
 - Add Apache 2.0 licensing and Pub.dev package metadata.
+- Add an explicit Hindatech production API configuration preset.
 - Establish the public SDK package boundary.
 - Add SDK configuration and session contracts.
 - Add forward-compatible capture-manifest parsing.
