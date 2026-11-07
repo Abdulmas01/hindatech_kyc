@@ -16,6 +16,14 @@ void main() {
     expect(strings.captureButton, 'Scan ID');
   });
 
+  test('provides complete default selfie capture copy', () {
+    const strings = SelfieCaptureStrings();
+    expect(strings.title, isNotEmpty);
+    expect(strings.blinkMessage, isNotEmpty);
+    expect(strings.captureButton, isNotEmpty);
+    expect(strings.continueButton, isNotEmpty);
+  });
+
   test('applies SDK colors without replacing the host text theme', () {
     const captureTheme = DocumentCaptureTheme(primaryColor: Colors.purple);
     final hostTheme = ThemeData.light().copyWith(
@@ -31,8 +39,12 @@ void main() {
       apiBaseUri: Uri.parse('https://api.hindatech.com'),
       strings: const DocumentCaptureStrings(captureButton: 'Scan'),
       theme: const DocumentCaptureTheme(primaryColor: Colors.orange),
+      selfieStrings: const SelfieCaptureStrings(captureButton: 'Take photo'),
+      selfieTheme: const SelfieCaptureTheme(primaryColor: Colors.blue),
     );
     expect(config.strings.captureButton, 'Scan');
     expect(config.theme.primaryColor, Colors.orange);
+    expect(config.selfieStrings.captureButton, 'Take photo');
+    expect(config.selfieTheme.primaryColor, Colors.blue);
   });
 }

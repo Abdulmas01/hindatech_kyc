@@ -1,5 +1,7 @@
 import '../presentation/document_capture_strings.dart';
 import '../presentation/document_capture_theme.dart';
+import '../presentation/selfie_capture_strings.dart';
+import '../presentation/selfie_capture_theme.dart';
 
 /// Configuration supplied by the application using the SDK.
 class KycConfig {
@@ -10,6 +12,8 @@ class KycConfig {
     this.maxPollingAttempts = 30,
     this.theme = const DocumentCaptureTheme(),
     this.strings = const DocumentCaptureStrings(),
+    this.selfieTheme = const SelfieCaptureTheme(),
+    this.selfieStrings = const SelfieCaptureStrings(),
   })  : assert(requestTimeout > Duration.zero),
         assert(pollingInterval > Duration.zero),
         assert(maxPollingAttempts > 0);
@@ -20,4 +24,6 @@ class KycConfig {
   final int maxPollingAttempts;
   final DocumentCaptureTheme theme;
   final DocumentCaptureStrings strings;
+  final SelfieCaptureTheme selfieTheme;
+  final SelfieCaptureStrings selfieStrings;
 }

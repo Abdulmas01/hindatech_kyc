@@ -31,3 +31,4 @@
 - Add ML Kit camera-frame face observations for policy-aware capture guidance.
 - Add backend-policy-driven active guidance sequencing and timeouts.
 - Add navigation-safe selfie camera runtime and explicit startup states.
+- Add the policy-driven selfie capture view and responsive face guide.

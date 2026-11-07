@@ -94,6 +94,41 @@ DocumentCaptureView(
 )
 ```
 
+For a workflow with a non-null `livenessPolicy`, launch the selfie view with
+that exact policy. The SDK uses active challenges only as capture guidance;
+NestJS remains responsible for the liveness decision.
+
+```dart
+Future<void> handleSelfieCapture(SelfieCaptureResult result) async {
+  try {
+    final hostedAsset = await client.uploadHostedAsset(
+      HostedAssetUploadRequest(
+        inputType: CaptureAssetType.selfiePrimary.wireValue,
+        filePath: result.path,
+      ),
+    );
+    selectedAssetKeys[hostedAsset.inputTypeValue] = hostedAsset.assetKey;
+  } finally {
+    await result.deleteLocalFile();
+  }
+}
+
+final livenessPolicy = client.session.livenessPolicy;
+if (livenessPolicy != null) {
+  SelfieCaptureView(
+    policy: livenessPolicy,
+    config: const SelfieCaptureConfig.balanced(),
+    onCompleted: handleSelfieCapture,
+    onCancel: () => Navigator.of(context).pop(),
+  );
+}
+```
+
+Pass a `RouteObserver<ModalRoute<dynamic>>` registered on the host Navigator
+when the capture route can be covered without being disposed. The view also
+tracks `ModalRoute.isCurrentOf` automatically; the observer provides an
+explicit integration point for custom navigation setups.
+
 Choose the asset slot from `client.session.requiredInputs`. Keep the returned
 `assetKey` for submission. Uploading the same input type again creates another
 temporary asset. If an upload times out after the request may have reached the
