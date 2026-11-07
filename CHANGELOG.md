@@ -28,3 +28,4 @@
 - Add stable verification results to recovered and polled session state.
 - Consume backend-owned liveness capture policy in bootstrap and recovery.
 - Add rotation-, mirror-, and crop-aware face alignment guidance foundations.
+- Add ML Kit camera-frame face observations for policy-aware capture guidance.
