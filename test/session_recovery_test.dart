@@ -67,6 +67,23 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('recovers the current backend liveness policy', () {
+    final payload = sdkBootstrapPayload()
+      ..remove('sdkToken')
+      ..remove('sdkTokenExpiresAt')
+      ..remove('allowedActions')
+      ..remove('sessionExpiresAt')
+      ..['livenessPolicy'] = sdkLivenessPolicyPayload()
+      ..['hostedAssets'] = <Object?>[];
+
+    final state = VerificationSessionState.fromJson(payload);
+
+    expect(state.livenessPolicy?.alignmentStabilityFrames, 5);
+    expect(state.livenessPolicy?.requireSingleFace, isTrue);
+    expect(state.livenessPolicy?.requireNeutralPose, isTrue);
+    expect(state.livenessPolicy?.requireReturnToNeutral, isTrue);
+  });
 }
 
 Map<String, Object?> _hostedAsset(String assetKey, String uploadedAt) => {

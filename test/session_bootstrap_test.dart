@@ -20,6 +20,24 @@ void main() {
       expect(client.session.requiredInputs.requiredAssetTypes, [
         'document_front',
       ]);
+      expect(client.session.livenessPolicy, isNull);
+    });
+
+    test('reads liveness policy from the session response', () async {
+      final client = await KycClient.bootstrap(
+        config: config,
+        sessionProvider: () async => {
+          ...sdkBootstrapPayload(),
+          'livenessPolicy': sdkLivenessPolicyPayload(),
+        },
+      );
+
+      final policy = client.session.livenessPolicy!;
+      expect(policy.challengeCount, 2);
+      expect(policy.challengeTimeout, const Duration(seconds: 15));
+      expect(policy.isBackendAuthoritative, isTrue);
+      expect(policy.isGuidanceOnly, isTrue);
+      expect(policy.canSubmitTemporalEvidence, isFalse);
     });
 
     test('reports customer backend failures without exposing credentials',

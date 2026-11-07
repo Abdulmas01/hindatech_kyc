@@ -44,6 +44,26 @@ Never place a permanent customer API credential in the Flutter application.
 The backend must return the NestJS SDK bootstrap contract. Its token must be
 scoped to `client.session.verificationSessionId` with a short expiry.
 
+For workflows that execute liveness, use the nullable backend policy rather
+than a hardcoded challenge sequence:
+
+```dart
+final policy = client.session.livenessPolicy;
+if (policy != null) {
+  final challenges = policy.createGuidanceSequence();
+  final timeout = policy.challengeTimeout;
+  final stableFrames = policy.alignmentStabilityFrames;
+
+  // Apply policy.requireSingleFace, policy.requireNeutralPose, and
+  // policy.requireReturnToNeutral while presenting these challenges.
+}
+```
+
+With `activeGuidanceRole=guidance_only`, completing these actions only permits
+capture to continue; it is not a successful liveness result. The final decision
+comes from backend processing when `decisionAuthority=backend`. Do not submit an
+ordered challenge sequence when `temporalEvidenceSupported` is `false`.
+
 Call `client.close()` when the verification flow is permanently finished so
 the SDK can release its network resources.
 
@@ -217,6 +237,7 @@ DocumentCaptureView(
 - Validated short-lived session bootstrap
 - Centralized, session-authorized API transport and endpoint definitions
 - NestJS-provided required asset and payload inputs
+- Nullable backend-owned liveness capture guidance policy
 - NestJS upload, polling, and re-bootstrap policies
 - Workflow-aware NestJS hosted asset upload and typed asset receipts
 - Session recovery with duplicate staged-asset preservation

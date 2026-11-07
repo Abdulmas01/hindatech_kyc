@@ -43,6 +43,7 @@ Map<String, Object?> sdkBootstrapPayload({
         'proxyUploadUrlTemplate':
             '/api/v1/sdk/verification-sessions/{verificationSessionId}/assets/hosted',
       },
+      'livenessPolicy': null,
       'polling': {
         'statusUrl': '/api/v1/sdk/verification-sessions/verification-id',
         'recommendedIntervalMs': 3000,
@@ -65,4 +66,20 @@ Map<String, Object?> sdkBootstrapPayload({
         'failureMessage': null,
         'reasonCodes': <String>[],
       },
+    };
+
+Map<String, Object?> sdkLivenessPolicyPayload() => {
+      'version': '1',
+      'mode': 'passive_with_active_guidance',
+      'decisionAuthority': 'backend',
+      'activeGuidanceRole': 'guidance_only',
+      'challengeCount': 2,
+      'allowedChallenges': ['blink', 'turn_left', 'turn_right'],
+      'randomize': true,
+      'challengeTimeoutMs': 15000,
+      'alignmentStabilityFrames': 5,
+      'requireSingleFace': true,
+      'requireNeutralPose': true,
+      'requireReturnToNeutral': true,
+      'temporalEvidenceSupported': false,
     };

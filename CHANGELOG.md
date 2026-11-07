@@ -26,3 +26,4 @@
 - Add validated SDK consent evidence recording and retrieval.
 - Add customer-managed external asset reference submission.
 - Add stable verification results to recovered and polled session state.
+- Consume backend-owned liveness capture policy in bootstrap and recovery.
