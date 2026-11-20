@@ -9,6 +9,7 @@ import '../../../../core/camera/camera_lifecycle_coordinator.dart';
 import '../../../../core/camera/camera_permission_service.dart';
 import '../../../../presentation/document_capture_strings.dart';
 import '../../../../presentation/document_capture_theme.dart';
+import '../../../../session/verification_document_quality_policy.dart';
 import '../../data/services/document_bounds_detector.dart';
 import '../../data/services/document_camera_controller_factory.dart';
 import '../../data/services/document_capture_service.dart';
@@ -24,6 +25,7 @@ import 'document_quality_guidance_banner.dart';
 class DocumentCaptureView extends StatelessWidget {
   const DocumentCaptureView({
     required this.onCompleted,
+    required this.qualityPolicy,
     super.key,
     this.onCancel,
     this.onError,
@@ -40,6 +42,13 @@ class DocumentCaptureView extends StatelessWidget {
   /// The application should call [DocumentCaptureResult.deleteLocalFiles]
   /// after it finishes uploading or otherwise processing the result.
   final ValueChanged<DocumentCaptureResult> onCompleted;
+
+  /// Backend-owned policy for optional local document quality guidance.
+  ///
+  /// Pass the nullable value from SDK bootstrap or recovery unchanged. A null,
+  /// disabled, unsupported, or non-backend-authoritative policy disables local
+  /// guidance without disabling manual document capture.
+  final VerificationDocumentQualityPolicy? qualityPolicy;
   final VoidCallback? onCancel;
   final ValueChanged<Object>? onError;
 
@@ -61,6 +70,7 @@ class DocumentCaptureView extends StatelessWidget {
     return ProviderScope(
       child: _DocumentCaptureBody(
         onCompleted: onCompleted,
+        qualityPolicy: qualityPolicy,
         onCancel: onCancel,
         onError: onError,
         onQualityError: onQualityError,
@@ -77,6 +87,7 @@ class DocumentCaptureView extends StatelessWidget {
 class _DocumentCaptureBody extends ConsumerStatefulWidget {
   const _DocumentCaptureBody({
     required this.onCompleted,
+    required this.qualityPolicy,
     required this.config,
     required this.strings,
     required this.captureTheme,
@@ -88,6 +99,7 @@ class _DocumentCaptureBody extends ConsumerStatefulWidget {
   });
 
   final ValueChanged<DocumentCaptureResult> onCompleted;
+  final VerificationDocumentQualityPolicy? qualityPolicy;
   final VoidCallback? onCancel;
   final ValueChanged<Object>? onError;
   final ValueChanged<Object>? onQualityError;
@@ -137,7 +149,8 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
   void didUpdateWidget(covariant _DocumentCaptureBody oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.qualityAssessments, widget.qualityAssessments) ||
-        !identical(oldWidget.config, widget.config)) {
+        !identical(oldWidget.config, widget.config) ||
+        !identical(oldWidget.qualityPolicy, widget.qualityPolicy)) {
       _subscribeToQualityAssessments();
     }
   }
@@ -264,8 +277,10 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
     _qualitySubscription = null;
     _qualityGuidance.reset();
     _cancelAutoCapture();
+    ref.read(documentCaptureProvider.notifier).clearQualityGuidance();
 
-    if (widget.config.qualityGuidanceMode ==
+    if (!_permitsLocalQualityGuidance ||
+        widget.config.qualityGuidanceMode ==
             DocumentQualityGuidanceMode.disabled ||
         widget.qualityAssessments == null) {
       return;
@@ -282,14 +297,16 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
 
   void _handleQualityAssessment(DocumentQualityAssessment assessment) {
     if (!mounted ||
+        !_permitsLocalQualityGuidance ||
         widget.config.qualityGuidanceMode ==
             DocumentQualityGuidanceMode.disabled) {
       return;
     }
 
+    final policyAssessment = _applyQualityPolicy(assessment);
     final guidance = _qualityGuidance.evaluate(
-      assessment: assessment,
-      stabilityFrames: widget.config.guidanceStabilityFrames,
+      assessment: policyAssessment,
+      stabilityFrames: widget.qualityPolicy!.stabilityFrames,
     );
     ref.read(documentCaptureProvider.notifier).updateQuality(guidance);
     _syncAutoCapture(guidance);
@@ -297,7 +314,7 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
 
   void _syncAutoCapture(DocumentQualityGuidance guidance) {
     final state = ref.read(documentCaptureProvider);
-    if (!widget.config.autoCaptureEnabled ||
+    if (!_permitsAutoCapture ||
         !guidance.suggestsCaptureReady ||
         !state.canCapture) {
       _cancelAutoCapture();
@@ -308,7 +325,7 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
     _autoCaptureTimer = Timer(widget.config.autoCaptureHoldDuration, () {
       if (!mounted) return;
       final current = ref.read(documentCaptureProvider);
-      if (!widget.config.autoCaptureEnabled ||
+      if (!_permitsAutoCapture ||
           !current.canCapture ||
           !current.suggestsCaptureReady) {
         return;
@@ -321,6 +338,39 @@ class _DocumentCaptureBodyState extends ConsumerState<_DocumentCaptureBody>
   void _cancelAutoCapture() {
     _autoCaptureTimer?.cancel();
     _autoCaptureTimer = null;
+  }
+
+  bool get _permitsLocalQualityGuidance =>
+      widget.qualityPolicy?.permitsLocalGuidance ?? false;
+
+  bool get _permitsAutoCapture =>
+      widget.config.autoCaptureEnabled &&
+      (widget.qualityPolicy?.autoCaptureAllowed ?? false) &&
+      _permitsLocalQualityGuidance;
+
+  DocumentQualityAssessment _applyQualityPolicy(
+    DocumentQualityAssessment assessment,
+  ) {
+    final policy = widget.qualityPolicy!;
+    final signalValue = switch (assessment.signal) {
+      DocumentQualitySignal.good => 'good',
+      DocumentQualitySignal.blurry => 'blurry',
+      DocumentQualitySignal.glare => 'glare',
+      DocumentQualitySignal.dark => 'dark',
+      DocumentQualitySignal.noDocument => 'no_document',
+      DocumentQualitySignal.unknown => 'unknown',
+    };
+    if (policy.acceptsSignal(
+      signalValue: signalValue,
+      confidence: assessment.confidence,
+    )) {
+      return assessment;
+    }
+    return DocumentQualityAssessment(
+      signal: DocumentQualitySignal.unknown,
+      confidence: assessment.confidence,
+      source: assessment.source,
+    );
   }
 
   Future<void> _disposeCamera() async {

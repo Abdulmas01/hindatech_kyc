@@ -263,6 +263,36 @@ VerificationLivenessPolicy demoLivenessPolicy({bool randomize = true}) {
   );
 }
 
+/// Simulates the nullable policy returned by SDK bootstrap and recovery.
+///
+/// Production applications must pass `client.session.documentQualityPolicy`
+/// rather than constructing this policy locally.
+VerificationDocumentQualityPolicy demoDocumentQualityPolicy() {
+  return VerificationDocumentQualityPolicy(
+    version: 'demo-v1',
+    modeValue: 'guidance_only',
+    decisionAuthorityValue: 'backend',
+    localInferenceEnabled: true,
+    autoCaptureAllowed: true,
+    stabilityFrames: 3,
+    samplingInterval: const Duration(milliseconds: 250),
+    supportedSignalValues: const [
+      'good',
+      'blurry',
+      'glare',
+      'dark',
+      'no_document',
+    ],
+    minimumConfidenceBySignal: const {
+      'good': 0.7,
+      'blurry': 0.6,
+      'glare': 0.6,
+      'dark': 0.6,
+      'no_document': 0.6,
+    },
+  );
+}
+
 class _CaptureExampleCard extends StatelessWidget {
   const _CaptureExampleCard({
     required this.title,
@@ -392,6 +422,7 @@ class _DocumentCapturePageState extends State<DocumentCapturePage> {
         children: [
           DocumentCaptureView(
             config: widget.config,
+            qualityPolicy: demoDocumentQualityPolicy(),
             qualityAssessments:
                 widget.showDiagnostics ? _qualityAssessments.stream : null,
             strings: const DocumentCaptureStrings(

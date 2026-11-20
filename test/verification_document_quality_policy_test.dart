@@ -21,6 +21,19 @@ void main() {
       VerificationDocumentQualitySignal.dark,
       VerificationDocumentQualitySignal.noDocument,
     ]);
+    expect(policy.permitsLocalGuidance, isTrue);
+    expect(
+      policy.acceptsSignal(signalValue: 'good', confidence: 0.7),
+      isTrue,
+    );
+    expect(
+      policy.acceptsSignal(signalValue: 'good', confidence: 0.69),
+      isFalse,
+    );
+    expect(
+      policy.acceptsSignal(signalValue: 'future_signal', confidence: 1),
+      isFalse,
+    );
   });
 
   test('requires every supported signal to have a confidence threshold', () {

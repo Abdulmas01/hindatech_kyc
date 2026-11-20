@@ -105,8 +105,21 @@ class VerificationDocumentQualityPolicy {
   bool get isBackendAuthoritative =>
       decisionAuthority == VerificationDocumentQualityDecisionAuthority.backend;
 
+  bool get permitsLocalGuidance =>
+      localInferenceEnabled && isGuidanceOnly && isBackendAuthoritative;
+
   double? minimumConfidenceFor(VerificationDocumentQualitySignal signal) =>
       minimumConfidenceBySignal[signal.wireValue];
+
+  bool acceptsSignal({
+    required String signalValue,
+    required double confidence,
+  }) {
+    if (!confidence.isFinite || confidence < 0 || confidence > 1) return false;
+    if (!supportedSignalValues.contains(signalValue)) return false;
+    final minimum = minimumConfidenceBySignal[signalValue];
+    return minimum != null && confidence >= minimum;
+  }
 
   factory VerificationDocumentQualityPolicy.fromJson(
     Map<String, Object?> json,

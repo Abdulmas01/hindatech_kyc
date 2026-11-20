@@ -100,6 +100,7 @@ Future<void> handleDocumentCapture(DocumentCaptureResult result) async {
 
 DocumentCaptureView(
   config: const DocumentCaptureConfig.highQuality(),
+  qualityPolicy: client.session.documentQualityPolicy,
   onCompleted: handleDocumentCapture,
   onCancel: () => Navigator.of(context).pop(),
   onError: (error) {
@@ -274,6 +275,7 @@ final captureConfig = const DocumentCaptureConfig.balanced().copyWith(
 
 DocumentCaptureView(
   config: captureConfig,
+  qualityPolicy: client.session.documentQualityPolicy,
   qualityAssessments: localAssessor.assessments,
   onQualityError: reportNonBlockingQualityError,
   onCompleted: handleCapture,
