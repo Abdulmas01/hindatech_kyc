@@ -72,6 +72,12 @@ capture to continue; it is not a successful liveness result. The final decision
 comes from backend processing when `decisionAuthority=backend`. Do not submit an
 ordered challenge sequence when `temporalEvidenceSupported` is `false`.
 
+Document workflows use the same backend-owned pattern. The required nullable
+`documentQualityPolicy` field controls whether local inference is enabled,
+which advisory signals are supported, confidence thresholds, sampling cadence,
+stability, and whether stable guidance may trigger auto-capture. Local quality
+observations never replace backend document validation.
+
 Call `client.close()` when the verification flow is permanently finished so
 the SDK can release its network resources.
 

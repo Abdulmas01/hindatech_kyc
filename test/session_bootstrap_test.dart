@@ -21,6 +21,29 @@ void main() {
         'document_front',
       ]);
       expect(client.session.livenessPolicy, isNull);
+      expect(client.session.documentQualityPolicy, isNull);
+    });
+
+    test('reads document quality policy from the session response', () async {
+      final client = await KycClient.bootstrap(
+        config: config,
+        sessionProvider: () async => {
+          ...sdkBootstrapPayload(),
+          'documentQualityPolicy': sdkDocumentQualityPolicyPayload(),
+        },
+      );
+
+      final policy = client.session.documentQualityPolicy!;
+      expect(policy.isGuidanceOnly, isTrue);
+      expect(policy.isBackendAuthoritative, isTrue);
+      expect(policy.localInferenceEnabled, isTrue);
+      expect(policy.autoCaptureAllowed, isTrue);
+      expect(policy.stabilityFrames, 3);
+      expect(policy.samplingInterval, const Duration(milliseconds: 250));
+      expect(
+        policy.minimumConfidenceFor(VerificationDocumentQualitySignal.good),
+        0.7,
+      );
     });
 
     test('reads liveness policy from the session response', () async {

@@ -43,6 +43,7 @@ Map<String, Object?> sdkBootstrapPayload({
         'proxyUploadUrlTemplate':
             '/api/v1/sdk/verification-sessions/{verificationSessionId}/assets/hosted',
       },
+      'documentQualityPolicy': null,
       'livenessPolicy': null,
       'polling': {
         'statusUrl': '/api/v1/sdk/verification-sessions/verification-id',
@@ -82,4 +83,28 @@ Map<String, Object?> sdkLivenessPolicyPayload() => {
       'requireNeutralPose': true,
       'requireReturnToNeutral': true,
       'temporalEvidenceSupported': false,
+    };
+
+Map<String, Object?> sdkDocumentQualityPolicyPayload() => {
+      'version': '1',
+      'mode': 'guidance_only',
+      'decisionAuthority': 'backend',
+      'localInferenceEnabled': true,
+      'autoCaptureAllowed': true,
+      'stabilityFrames': 3,
+      'samplingIntervalMs': 250,
+      'supportedSignals': [
+        'good',
+        'blurry',
+        'glare',
+        'dark',
+        'no_document',
+      ],
+      'minimumConfidenceBySignal': {
+        'good': 0.7,
+        'blurry': 0.6,
+        'glare': 0.6,
+        'dark': 0.6,
+        'no_document': 0.6,
+      },
     };

@@ -1,5 +1,6 @@
 import '../core/serialization/json_fields.dart';
 import 'hosted_asset.dart';
+import 'verification_document_quality_policy.dart';
 import 'verification_liveness_policy.dart';
 import 'verification_required_inputs.dart';
 import 'verification_result.dart';
@@ -17,6 +18,7 @@ class VerificationSessionState {
     required this.statusValue,
     required this.requiredInputs,
     required this.uploadPolicy,
+    required this.documentQualityPolicy,
     required this.livenessPolicy,
     required this.polling,
     required this.rebootstrap,
@@ -34,6 +36,7 @@ class VerificationSessionState {
   final String statusValue;
   final VerificationRequiredInputs requiredInputs;
   final VerificationUploadPolicy uploadPolicy;
+  final VerificationDocumentQualityPolicy? documentQualityPolicy;
   final VerificationLivenessPolicy? livenessPolicy;
   final VerificationPollingPolicy polling;
   final VerificationRebootstrapPolicy rebootstrap;
@@ -103,6 +106,8 @@ class VerificationSessionState {
       uploadPolicy: VerificationUploadPolicy.fromJson(
         JsonFields.requiredMap(json, 'uploadPolicy'),
       ),
+      documentQualityPolicy:
+          VerificationDocumentQualityPolicy.readNullable(json),
       livenessPolicy: VerificationLivenessPolicy.readNullable(json),
       polling: VerificationPollingPolicy.fromJson(
         JsonFields.requiredMap(json, 'polling'),

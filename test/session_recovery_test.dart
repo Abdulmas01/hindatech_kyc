@@ -84,6 +84,22 @@ void main() {
     expect(state.livenessPolicy?.requireNeutralPose, isTrue);
     expect(state.livenessPolicy?.requireReturnToNeutral, isTrue);
   });
+
+  test('recovers the current backend document quality policy', () {
+    final payload = sdkBootstrapPayload()
+      ..remove('sdkToken')
+      ..remove('sdkTokenExpiresAt')
+      ..remove('allowedActions')
+      ..remove('sessionExpiresAt')
+      ..['documentQualityPolicy'] = sdkDocumentQualityPolicyPayload()
+      ..['hostedAssets'] = <Object?>[];
+
+    final state = VerificationSessionState.fromJson(payload);
+
+    expect(state.documentQualityPolicy?.stabilityFrames, 3);
+    expect(state.documentQualityPolicy?.autoCaptureAllowed, isTrue);
+    expect(state.documentQualityPolicy?.isBackendAuthoritative, isTrue);
+  });
 }
 
 Map<String, Object?> _hostedAsset(String assetKey, String uploadedAt) => {
